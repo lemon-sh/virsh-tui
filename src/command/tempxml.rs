@@ -41,7 +41,7 @@ pub fn path_arg(file: &NamedTempFile) -> String {
     file.path().to_string_lossy().into_owned()
 }
 
-#[cfg(test)]
+#[cfg(all(test, unix))]
 mod tests {
     use std::os::unix::fs::PermissionsExt;
 

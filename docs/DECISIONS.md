@@ -140,3 +140,12 @@
 - **Known limitation.** Actions are awaited inside key handling, so a long job (migration, wipe) keeps the UI
   busy until it finishes. Moving executions to background tasks with progress in the message line is the next
   structural step.
+
+
+## Disconnection and performance hardening (2026-11-02)
+
+- **Bogus demo data removal when disconnected:** In live mode without `--demo`, if the libvirt connection fails at startup or drops, the dashboard no longer instantiates `DashboardState::demo()`. Instead, `from_summaries(&[])` initializes a clean live state with `connected: false`, preventing fake mock domains, fake host specs, demo Braille charts, and mockup events from appearing.
+- **Empty domain selection handling:** `render_right` and `render_overview` guard against empty domain selections (`sel.name.is_empty()`) when no domains exist or when disconnected, showing clean disconnection notices rather than fabricated demo metrics.
+- **Filter and sort allocations:** `visible_rows()` now borrows names as string slices during sorting instead of cloning `String` on every comparator invocation. Filter queries are lowercased once outside the loop.
+- **Event query search:** `EventsState::visible()` searches event fields directly without allocating intermediate combined strings per event.
+- **Metrics store retains:** Linear O(N*M) retain checks in `MetricsStore::ingest_domains` are replaced with O(N+M) set lookups, and unnecessary clones of previous counters are avoided.

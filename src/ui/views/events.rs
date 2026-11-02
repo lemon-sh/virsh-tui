@@ -137,15 +137,18 @@ impl EventsState {
 
     /// Visible events after filter + search.
     pub fn visible(&self) -> Vec<&LibvirtEvent> {
+        let q = self.query.to_lowercase();
         self.events
             .iter()
             .rev()
             .filter(|e| self.filter.matches(e))
             .filter(|e| {
-                self.query.is_empty()
-                    || format!("{} {} {} {} {}", e.timestamp, e.kind, e.object, e.event, e.detail)
-                        .to_lowercase()
-                        .contains(&self.query.to_lowercase())
+                q.is_empty()
+                    || e.timestamp.to_lowercase().contains(&q)
+                    || e.kind.to_lowercase().contains(&q)
+                    || e.object.to_lowercase().contains(&q)
+                    || e.event.to_lowercase().contains(&q)
+                    || e.detail.to_lowercase().contains(&q)
             })
             .collect()
     }

@@ -12,7 +12,14 @@ pub(super) async fn fill_live_host(uri: &str) -> ui::views::host::HostState {
     host.connected = true;
     host.system = host_system_facts(uri).await;
     let backend = VirshBackend::new(uri);
-    if let Ok(pools) = backend.pools().await {
+    let pools_res = backend.pools().await;
+    let nets_res = backend.networks().await;
+    let doms_res = backend.list_domains().await;
+    host.connected = pools_res.is_ok() || nets_res.is_ok() || doms_res.is_ok();
+    if !host.connected {
+        host.message = String::from("disconnected");
+    }
+    if let Ok(pools) = pools_res {
         host.pools_active = format!(
             "{}/{} active",
             pools.iter().filter(|p| p.state == "running").count(),
@@ -34,7 +41,7 @@ pub(super) async fn fill_live_host(uri: &str) -> ui::views::host::HostState {
             })
             .collect();
     }
-    if let Ok(nets) = backend.networks().await {
+    if let Ok(nets) = nets_res {
         host.nets_active = format!(
             "{}/{} active",
             nets.iter().filter(|n| n.state == "active").count(),
@@ -58,7 +65,7 @@ pub(super) async fn fill_live_host(uri: &str) -> ui::views::host::HostState {
         }
         host.nets = rows;
     }
-    if let Ok(domains) = backend.list_domains().await {
+    if let Ok(domains) = doms_res {
         let running: Vec<_> = domains
             .iter()
             .filter(|d| d.state == crate::model::DomainState::Running)
@@ -274,7 +281,10 @@ pub(super) async fn fill_live_nets(uri: &str) -> ui::views::networks::NetworksSt
                 });
             }
         }
-        Err(e) => st.message = format!("✗ {}", first_line(&e.to_string())),
+        Err(e) => {
+            st.connected = false;
+            st.message = format!("✗ {}", first_line(&e.to_string()));
+        }
     }
     st.selected = 0;
     load_net_selection(uri, &mut st).await;
@@ -555,7 +565,10 @@ pub(super) async fn fill_live_store(uri: &str) -> ui::views::storage::StorageSta
                 }
             }
         }
-        Err(e) => st.message = format!("✗ {}", first_line(&e.to_string())),
+        Err(e) => {
+            st.connected = false;
+            st.message = format!("✗ {}", first_line(&e.to_string()));
+        }
     }
     st.pool_selected = 0;
     load_pool_volumes(uri, &mut st).await;

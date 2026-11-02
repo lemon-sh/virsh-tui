@@ -294,18 +294,19 @@ impl DashboardState {
     }
     /// Rows after chip + text filter + sort (selection indexes into this list).
     pub fn visible_rows(&self) -> Vec<&DomainRow> {
+        let filter_lower = self.filter.to_lowercase();
         let mut out: Vec<&DomainRow> = self
             .rows
             .iter()
             .filter(|r| self.chip.matches(r.state))
-            .filter(|r| self.filter.is_empty() || r.name.to_lowercase().contains(&self.filter.to_lowercase()))
+            .filter(|r| filter_lower.is_empty() || r.name.to_lowercase().contains(&filter_lower))
             .collect();
         match self.sort {
-            Sort::State => out.sort_by_key(|r| (state_rank(r.state), r.name.clone())),
-            Sort::Name => out.sort_by_key(|r| r.name.clone()),
+            Sort::State => out.sort_by_key(|r| (state_rank(r.state), r.name.as_str())),
+            Sort::Name => out.sort_by_key(|r| r.name.as_str()),
             Sort::Cpu => out.sort_by(|a, b| b.cpu_frac.total_cmp(&a.cpu_frac).then(a.name.cmp(&b.name))),
-            Sort::Mem => out.sort_by_key(|r| (u64::MAX - r.mem_sort_mib, r.name.clone())),
-            Sort::Uptime => out.sort_by_key(|r| r.uptime.clone()),
+            Sort::Mem => out.sort_by_key(|r| (u64::MAX - r.mem_sort_mib, r.name.as_str())),
+            Sort::Uptime => out.sort_by_key(|r| r.uptime.as_str()),
         }
         out
     }
@@ -886,7 +887,14 @@ fn render_events(frame: &mut Frame, theme: &Theme, state: &DashboardState, area:
         })
         .collect();
     if lines.is_empty() {
-        lines.push(Line::from(Span::styled("waiting for events…", theme.dim())));
+        lines.push(Line::from(Span::styled(
+            if !state.connected {
+                "disconnected"
+            } else {
+                "waiting for events…"
+            },
+            theme.dim(),
+        )));
     }
     let block = panel_block(theme, false, "Events", Some("libvirt event stream"));
     frame.render_widget(Paragraph::new(lines).block(block).style(theme.base()), area);
@@ -936,7 +944,14 @@ fn render_host(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: R
         lines.push(Line::from(spans));
     }
     if lines.is_empty() {
-        lines.push(Line::from(Span::styled("collecting…", theme.dim())));
+        lines.push(Line::from(Span::styled(
+            if !state.connected {
+                "disconnected"
+            } else {
+                "collecting…"
+            },
+            theme.dim(),
+        )));
     }
     let (title, right) = if state.live {
         (format!("Host · {}", state.hostname), state.host_title.clone())
@@ -951,6 +966,22 @@ fn render_host(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: R
 }
 
 fn render_right(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: Rect) {
+    let sel = state.selected();
+    if sel.name.is_empty() {
+        let block = panel_block(theme, false, "Overview", None);
+        let msg = if !state.connected {
+            "disconnected from libvirt daemon"
+        } else {
+            "no domains"
+        };
+        frame.render_widget(
+            Paragraph::new(Line::from(Span::styled(msg, theme.dim())))
+                .block(block)
+                .style(theme.base()),
+            area,
+        );
+        return;
+    }
     // Overview: borders, five info rows, a blank line, then the action rows.
     // The CPU graph gives up to two rows when the terminal is short, so the
     // chips keep their spacing.
@@ -1047,6 +1078,9 @@ fn action_chips(theme: &Theme, state: DomainState, width: usize) -> Vec<Line<'st
 
 fn render_overview(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: Rect) {
     let sel = state.selected();
+    if sel.name.is_empty() {
+        return;
+    }
     let t = &theme.tokens;
     let st = state_style(theme, sel.state);
     let title_right = Line::from(Span::styled(

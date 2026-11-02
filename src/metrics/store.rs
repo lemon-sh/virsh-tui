@@ -237,10 +237,11 @@ impl MetricsStore {
     /// domains that stopped or disappeared are dropped so a restart starts clean.
     pub fn ingest_domains(&mut self, stats: &[RawDomainStats], now: Instant) {
         let running: Vec<&RawDomainStats> = stats.iter().filter(|s| is_running(s)).collect();
+        let running_names: std::collections::HashSet<&str> =
+            running.iter().map(|s| s.domain.as_str()).collect();
         self.domains
-            .retain(|name, _| running.iter().any(|s| &s.domain == name));
-        self.prev
-            .retain(|name, _| running.iter().any(|s| &s.domain == name));
+            .retain(|name, _| running_names.contains(name.as_str()));
+        self.prev.retain(|name, _| running_names.contains(name.as_str()));
         for s in running {
             let cur = counters(s);
             let series = self.domains.entry(s.domain.clone()).or_default();

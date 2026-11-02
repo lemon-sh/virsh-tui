@@ -79,10 +79,14 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
         use crate::backend::{Backend, virsh::VirshBackend};
         let backend = VirshBackend::new(&cli.connect);
         match backend.list_domains().await {
-            Ok(summaries) => ui::views::dashboard::DashboardState::from_summaries(&summaries),
+            Ok(summaries) => {
+                let mut d = ui::views::dashboard::DashboardState::from_summaries(&summaries);
+                d.connected = true;
+                d
+            }
             Err(e) => {
-                let mut d = ui::views::dashboard::DashboardState::demo();
-                d.rows.clear();
+                let mut d = ui::views::dashboard::DashboardState::from_summaries(&[]);
+                d.connected = false;
                 d.message = format!(
                     "✗ virsh list failed: {}",
                     e.to_string().lines().next().unwrap_or("")
@@ -94,7 +98,13 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
 
     // Host/Networks/Storage need dozens of virsh calls: they load in the
     // background after the first frame (see `spawn_load`).
-    let loading_note = || String::from("loading…");
+    let loading_note = || {
+        if dash.connected {
+            String::from("loading…")
+        } else {
+            String::from("disconnected")
+        }
+    };
     let mut host = if cli.demo {
         ui::views::host::HostState::demo()
     } else {
@@ -121,6 +131,7 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
     };
     let mut events_state = ui::views::events::EventsState::demo();
     if !cli.demo {
+        let connected = dash.connected;
         // Live mode starts with an empty log; the stream fills it.
         events_state.events.clear();
         for (u, c) in [
@@ -131,7 +142,7 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
             (&mut events_state.uri, &mut events_state.connected),
         ] {
             *u = cli.connect.clone();
-            *c = true;
+            *c = connected;
         }
     }
     let wizard: Option<ui::overlays::wizard::WizardState> = None;
@@ -613,6 +624,12 @@ impl App {
 
     /// Apply live data from the poller.
     fn on_live(&mut self, msg: LiveMsg) {
+        if let LiveMsg::Failed(_) = &msg {
+            self.host.connected = false;
+            self.nets.connected = false;
+            self.store.connected = false;
+            self.events_state.connected = false;
+        }
         apply_live_msg(&self.uri, &mut self.dash, msg);
         // Drain whatever else is ready so one redraw covers it all.
         while let Some(msg) = self.poller.as_mut().and_then(|p| p.rx.try_recv().ok()) {
