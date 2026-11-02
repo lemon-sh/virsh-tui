@@ -7,6 +7,7 @@ pub mod parse_domstats;
 pub mod parse_help;
 pub mod parse_leases;
 pub mod parse_list;
+pub mod parse_nodestats;
 pub mod parse_xml;
 
 use color_eyre::Result;
@@ -64,6 +65,30 @@ impl VirshBackend {
             .collect();
         Ok((summaries, stats))
     }
+
+    /// Hypervisor hostname via `virsh hostname`.
+    pub async fn hostname(&self) -> Result<String> {
+        let text = exec::run(&self.uri, &["hostname"]).await?;
+        let name = text.trim();
+        if name.is_empty() {
+            Ok(hostname())
+        } else {
+            Ok(crate::model::sanitize(name))
+        }
+    }
+
+    /// Remote host CPU and memory telemetry via `nodecpustats --percent` and `nodememstats`.
+    pub async fn node_stats(&self) -> Result<(Option<f64>, Option<parse_nodestats::NodeMemStats>)> {
+        let (cpu_res, mem_res) = tokio::join!(
+            exec::run(&self.uri, &["nodecpustats", "--percent"]),
+            exec::run(&self.uri, &["nodememstats"])
+        );
+        let cpu = cpu_res
+            .ok()
+            .and_then(|t| parse_nodestats::parse_nodecpustats_percent(&t));
+        let mem = mem_res.ok().and_then(|t| parse_nodestats::parse_nodememstats(&t));
+        Ok((cpu, mem))
+    }
 }
 
 #[async_trait::async_trait]
@@ -79,7 +104,8 @@ impl Backend for VirshBackend {
 
     async fn host_info(&self) -> Result<HostInfo> {
         let nodeinfo = exec::run(&self.uri, &["nodeinfo"]).await?;
-        Ok(host_local::parse_nodeinfo(&nodeinfo, &hostname()))
+        let host_name = self.hostname().await.unwrap_or_else(|_| hostname());
+        Ok(host_local::parse_nodeinfo(&nodeinfo, &host_name))
     }
 
     async fn networks(&self) -> Result<Vec<NetworkSummary>> {

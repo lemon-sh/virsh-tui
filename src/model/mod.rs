@@ -225,7 +225,7 @@ pub struct Snapshot {
 }
 
 /// Host static info (subset).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct HostInfo {
     pub hostname: String,
     pub cpu_model: String,
