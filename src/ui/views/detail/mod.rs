@@ -182,6 +182,7 @@ impl DetailState {
 /// Render the detail screen.
 pub fn render(frame: &mut Frame, theme: &Theme, state: &DetailState) {
     let area = frame.area();
+    frame.render_widget(ratatui::widgets::Block::default().style(theme.base()), area);
     if crate::ui::layout::breakpoint(area.width, area.height) == crate::ui::layout::Breakpoint::TooSmall {
         crate::ui::layout::render_too_small(frame, theme);
         return;
@@ -223,7 +224,7 @@ fn render_detail(frame: &mut Frame, theme: &Theme, state: &DetailState, area: Re
         .constraints([Constraint::Length(1), Constraint::Length(1), Constraint::Min(0)])
         .split(body);
     render_header(frame, theme, state, rows[0]);
-    frame.render_widget(Paragraph::new("").style(theme.base()), rows[1]);
+    frame.render_widget(ratatui::widgets::Block::default().style(theme.base()), rows[1]);
     match state.tab {
         DetailTab::Overview => render_overview(frame, theme, state, rows[2]),
         DetailTab::Monitor => render_monitor(frame, theme, state, rows[2]),

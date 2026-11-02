@@ -507,6 +507,7 @@ pub fn render_delete(
         .borders(Borders::ALL)
         .border_type(theme.border)
         .border_style(Style::default().fg(t.red).bg(t.bg))
+        .style(theme.base())
         .title(Span::styled(
             " ⚠ Delete snapshot ",
             Style::default().fg(t.red).bg(t.bg).add_modifier(Modifier::BOLD),
@@ -580,6 +581,7 @@ pub fn render_create(frame: &mut Frame, theme: &Theme, area: Rect, st: &Snapshot
         .borders(Borders::ALL)
         .border_type(theme.border)
         .border_style(Style::default().fg(t.blue).bg(t.bg))
+        .style(theme.base())
         .title(Span::styled(
             " New snapshot ",
             Style::default().fg(t.blue).bg(t.bg).add_modifier(Modifier::BOLD),

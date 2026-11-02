@@ -339,6 +339,7 @@ pub fn dhcp_range(cidr: &str) -> Option<(String, String)> {
 /// Render the networks screen.
 pub fn render(frame: &mut Frame, theme: &Theme, state: &NetworksState) {
     let area = frame.area();
+    frame.render_widget(ratatui::widgets::Block::default().style(theme.base()), area);
     if crate::ui::layout::breakpoint(area.width, area.height) == crate::ui::layout::Breakpoint::TooSmall {
         crate::ui::layout::render_too_small(frame, theme);
         return;

@@ -531,6 +531,10 @@ impl App {
 
     /// Draw one frame (views, overlays, chrome).
     fn draw(&self, f: &mut ratatui::Frame) {
+        f.render_widget(
+            ratatui::widgets::Block::default().style(self.theme.base()),
+            f.area(),
+        );
         match self.view {
             View::Gallery => ui::views::gallery::render(f, &self.theme),
             View::Host => ui::views::host::render(f, &self.theme, &self.host),

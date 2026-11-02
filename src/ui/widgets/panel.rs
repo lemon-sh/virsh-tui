@@ -26,6 +26,7 @@ pub fn block(
         .border_type(theme.border)
         .border_style(theme.panel_border(focused))
         .padding(Padding::horizontal(1))
+        .style(theme.base())
         .title(Span::styled(format!(" {title} "), theme.panel_title(focused)));
     if let Some(mut rt) = title_right {
         rt.spans.insert(0, Span::styled(" ", theme.dim()));

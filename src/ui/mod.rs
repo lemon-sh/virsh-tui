@@ -42,6 +42,7 @@ const TABS: [&str; 5] = ["1 Domains", "2 Host", "3 Networks", "4 Storage", "5 Ev
 /// Render the P0 chrome into the frame.
 pub fn render(frame: &mut Frame, theme: &Theme, state: &ChromeState) {
     let area = frame.area();
+    frame.render_widget(ratatui::widgets::Block::default().style(theme.base()), area);
     let rows = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -91,7 +92,7 @@ fn render_topbar(frame: &mut Frame, theme: &Theme, state: &ChromeState, area: ra
 }
 
 fn render_body(frame: &mut Frame, theme: &Theme, area: ratatui::layout::Rect) {
-    let text = ratatui::widgets::Paragraph::new("").style(theme.base());
+    let text = ratatui::widgets::Block::default().style(theme.base());
     frame.render_widget(text, area);
 }
 

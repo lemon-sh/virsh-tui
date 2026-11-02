@@ -140,61 +140,64 @@ pub(super) fn dump_frame(
     let backend = TestBackend::new(w, h);
     let mut terminal = Terminal::new(backend)?;
     let screen = screen.unwrap_or("dashboard");
-    terminal.draw(|f| match screen {
-        "gallery" => ui::views::gallery::render(f, theme),
-        "chrome" => ui::render(f, theme, state),
-        "host" => ui::views::host::render(f, theme, host),
-        "networks" => ui::views::networks::render(f, theme, nets),
-        "storage" => ui::views::storage::render(f, theme, store, false),
-        "settings" => ui::views::settings::render(
-            f,
-            theme,
-            &crate::config::Config::default(),
-            &ui::views::settings::SettingsState::open(&crate::config::Config::default()),
-        ),
-        "events" => ui::views::events::render(f, theme, &ui::views::events::EventsState::demo()),
-        "wizard" => {
-            ui::views::dashboard::render(f, theme, dash);
-            ui::widgets::modal::dim_background(f, theme);
-            ui::overlays::wizard::render(f, theme, &ui::overlays::wizard::WizardState::demo_step3());
-        }
-        "storage-picker" | "media" => ui::views::storage::render(f, theme, store, true),
-        "hardware" => {
-            let mut st = ui::views::detail::DetailState::demo("arch-dev");
-            st.tab = ui::views::detail::DetailTab::Hardware;
-            st.hw.selected = 1;
-            if let Some(form) = st.hw.forms.get_mut("cpus") {
-                form.focus = 1;
+    terminal.draw(|f| {
+        f.render_widget(ratatui::widgets::Block::default().style(theme.base()), f.area());
+        match screen {
+            "gallery" => ui::views::gallery::render(f, theme),
+            "chrome" => ui::render(f, theme, state),
+            "host" => ui::views::host::render(f, theme, host),
+            "networks" => ui::views::networks::render(f, theme, nets),
+            "storage" => ui::views::storage::render(f, theme, store, false),
+            "settings" => ui::views::settings::render(
+                f,
+                theme,
+                &crate::config::Config::default(),
+                &ui::views::settings::SettingsState::open(&crate::config::Config::default()),
+            ),
+            "events" => ui::views::events::render(f, theme, &ui::views::events::EventsState::demo()),
+            "wizard" => {
+                ui::views::dashboard::render(f, theme, dash);
+                ui::widgets::modal::dim_background(f, theme);
+                ui::overlays::wizard::render(f, theme, &ui::overlays::wizard::WizardState::demo_step3());
             }
-            st.hw.set_field("cpus", "max", "16");
-            st.hw_insert = true;
-            ui::views::detail::render(f, theme, &st);
+            "storage-picker" | "media" => ui::views::storage::render(f, theme, store, true),
+            "hardware" => {
+                let mut st = ui::views::detail::DetailState::demo("arch-dev");
+                st.tab = ui::views::detail::DetailTab::Hardware;
+                st.hw.selected = 1;
+                if let Some(form) = st.hw.forms.get_mut("cpus") {
+                    form.focus = 1;
+                }
+                st.hw.set_field("cpus", "max", "16");
+                st.hw_insert = true;
+                ui::views::detail::render(f, theme, &st);
+            }
+            "snapshots" => {
+                let mut st = ui::views::detail::DetailState::demo("arch-dev");
+                st.tab = ui::views::detail::DetailTab::Snapshots;
+                st.snap_modal = ui::views::detail::SnapModal::Revert;
+                ui::views::detail::render(f, theme, &st);
+            }
+            "detail" | "overview" => {
+                ui::views::detail::render(f, theme, &ui::views::detail::DetailState::demo("arch-dev"));
+            }
+            "monitor" => {
+                let mut st = ui::views::detail::DetailState::demo("arch-dev");
+                st.tab = ui::views::detail::DetailTab::Monitor;
+                ui::views::detail::render(f, theme, &st);
+            }
+            "palette" => {
+                ui::views::dashboard::render(f, theme, dash);
+                ui::widgets::modal::dim_background(f, theme);
+                ui::overlays::palette::render(f, theme, &ui::overlays::palette::PaletteState::demo());
+            }
+            "help" => {
+                ui::views::dashboard::render(f, theme, dash);
+                ui::widgets::modal::dim_background(f, theme);
+                ui::overlays::help::render(f, theme, "", &crate::input::keymap::default_map());
+            }
+            _ => ui::views::dashboard::render(f, theme, dash),
         }
-        "snapshots" => {
-            let mut st = ui::views::detail::DetailState::demo("arch-dev");
-            st.tab = ui::views::detail::DetailTab::Snapshots;
-            st.snap_modal = ui::views::detail::SnapModal::Revert;
-            ui::views::detail::render(f, theme, &st);
-        }
-        "detail" | "overview" => {
-            ui::views::detail::render(f, theme, &ui::views::detail::DetailState::demo("arch-dev"));
-        }
-        "monitor" => {
-            let mut st = ui::views::detail::DetailState::demo("arch-dev");
-            st.tab = ui::views::detail::DetailTab::Monitor;
-            ui::views::detail::render(f, theme, &st);
-        }
-        "palette" => {
-            ui::views::dashboard::render(f, theme, dash);
-            ui::widgets::modal::dim_background(f, theme);
-            ui::overlays::palette::render(f, theme, &ui::overlays::palette::PaletteState::demo());
-        }
-        "help" => {
-            ui::views::dashboard::render(f, theme, dash);
-            ui::widgets::modal::dim_background(f, theme);
-            ui::overlays::help::render(f, theme, "", &crate::input::keymap::default_map());
-        }
-        _ => ui::views::dashboard::render(f, theme, dash),
     })?;
     let buffer = terminal.backend().buffer().clone();
     std::fs::write(path, buffer_to_ansi(&buffer, w, h))?;

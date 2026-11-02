@@ -14,6 +14,7 @@ use ratatui::{
 /// Render the gallery demo.
 pub fn render(frame: &mut Frame, theme: &Theme) {
     let area = frame.area();
+    frame.render_widget(ratatui::widgets::Block::default().style(theme.base()), area);
     let rows = Layout::default()
         .direction(Direction::Vertical)
         .constraints([

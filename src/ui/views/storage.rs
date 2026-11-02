@@ -321,6 +321,7 @@ fn usage_frac(cap: &str, alloc: &str) -> f64 {
 /// Render storage (dimmed behind the picker, like modals).
 pub fn render(frame: &mut Frame, theme: &Theme, state: &StorageState, dimmed: bool) {
     let area = frame.area();
+    frame.render_widget(ratatui::widgets::Block::default().style(theme.base()), area);
     if crate::ui::layout::breakpoint(area.width, area.height) == crate::ui::layout::Breakpoint::TooSmall {
         crate::ui::layout::render_too_small(frame, theme);
         return;

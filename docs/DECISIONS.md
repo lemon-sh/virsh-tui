@@ -149,3 +149,8 @@
 - **Filter and sort allocations:** `visible_rows()` now borrows names as string slices during sorting instead of cloning `String` on every comparator invocation. Filter queries are lowercased once outside the loop.
 - **Event query search:** `EventsState::visible()` searches event fields directly without allocating intermediate combined strings per event.
 - **Metrics store retains:** Linear O(N*M) retain checks in `MetricsStore::ingest_domains` are replaced with O(N+M) set lookups, and unnecessary clones of previous counters are avoided.
+
+
+## Theming, terminal background, and overlay rendering (2026-11-02)
+
+- **Full-frame background fill:** The root frame draw and individual views now render a background `Block` with `theme.base()` covering the full area, and `panel::block` sets `.style(theme.base())`. Previously, unpainted frame cells (column margins, panel gutters, empty rows below paragraphs and modals) defaulted to `Color::Reset`, which caused transparent gaps in transparent terminals while text elements rendered with opaque background colors.

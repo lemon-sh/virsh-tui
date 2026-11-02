@@ -274,7 +274,7 @@ pub fn render(frame: &mut Frame, theme: &Theme, config: &Config, state: &Setting
     let area = frame.area();
     // Settings replaces the whole screen: wipe what the current view drew.
     frame.render_widget(ratatui::widgets::Clear, area);
-    frame.render_widget(Paragraph::new("").style(theme.base()), area);
+    frame.render_widget(ratatui::widgets::Block::default().style(theme.base()), area);
     if crate::ui::layout::breakpoint(area.width, area.height) == crate::ui::layout::Breakpoint::TooSmall {
         crate::ui::layout::render_too_small(frame, theme);
         return;

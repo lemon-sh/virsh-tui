@@ -41,6 +41,7 @@ pub fn render_too_small(frame: &mut ratatui::Frame, theme: &crate::theme::Theme)
         widgets::{Block, Borders, Paragraph},
     };
     let area = frame.area();
+    frame.render_widget(ratatui::widgets::Block::default().style(theme.base()), area);
     let w = area.width;
     let h = area.height;
     let msg = format!("Terminal too small — {w}×{h}, need 100×30");
