@@ -35,7 +35,7 @@ Tracks per-screen comparison against `docs/mockups/*.dc.html`.
 - [x] Row C: System, Storage pools gauges, Networks sparklines
 - [x] Status bar: mode pill, breadcrumb `host › running`, hints (exact), `history 60s`
 - [x] Message line sampling text
-- [ ] Deviations (with reason): Row A is Length(13) not Length(12) — 6 braille + per-thread + 3 meter + index + 2 borders = 13; demo message uses the virConnect string (live uses the virsh string).
+- [ ] Deviations (with reason): Row A is Length(13) not Length(12) — 6 braille + per-thread + 3 meter + index + 2 borders = 13; demo message uses the virConnect string (live uses the virsh string); remote hypervisors hide per-thread meters, temp, and freq per PLAN.md §4.2 and show nodecpustats + nodememstats.
 
 ## 03 Domain detail shell (mockup: docs/mockups/Detail.dc.html, P6 tabs)
 - [x] Header: breadcrumb, name, state, uptime, inner tabs, H/L hint, back hint
