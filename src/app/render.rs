@@ -6,42 +6,7 @@ use super::*;
 
 /// Render the which-key popup bottom-right for a pending prefix.
 pub(super) fn render_which_key(f: &mut ratatui::Frame, theme: &Theme, prefix: &str) {
-    use ratatui::text::{Line, Span};
-    use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
-    let t = &theme.tokens;
-    let rows: &[(&str, &str)] = match prefix {
-        "Space" => &[
-            ("n", "new domain"),
-            ("c", "clone"),
-            ("r", "rename"),
-            ("s …", "snapshot"),
-            ("m …", "media"),
-            ("x", "export XML"),
-        ],
-        "Space s" => &[("c", "snapshot new"), ("r", "revert"), ("d", "delete")],
-        "Space m" => &[("i", "insert ISO"), ("e", "eject")],
-        "g" => &[("g", "top"), ("1-5", "views")],
-        "y" => &[("y", "name"), ("u", "uuid"), ("i", "ip"), ("c", "command")],
-        _ => &[("…", "…")],
-    };
-    let lines: Vec<Line> = rows
-        .iter()
-        .map(|(k, d)| {
-            Line::from(vec![
-                Span::styled(*k, theme.key()),
-                Span::styled(format!("  {d}"), theme.dim()),
-            ])
-        })
-        .collect();
-    let w = 22u16;
-    let h = (lines.len() as u16 + 2).min(f.area().height);
-    let area = f.area();
-    let rect = ratatui::layout::Rect::new(area.x + area.width - w - 1, area.y + area.height - h - 2, w, h);
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(t.gutter).bg(t.bg));
-    f.render_widget(Paragraph::new(lines).block(block).style(theme.base()), rect);
+    crate::ui::widgets::whichkey::render(f, theme, prefix);
 }
 
 pub(super) fn parse_size(size: &str) -> (u16, u16) {

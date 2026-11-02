@@ -238,7 +238,6 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
         messages.extend(keymap_warnings.iter().cloned());
     }
     let last_key = std::time::Instant::now();
-    let which_key_since: Option<std::time::Instant> = None;
     let detail: Option<ui::views::detail::DetailState> = None;
     let poller: Option<poller::Poller> = None;
     let poller_uri = String::new();
@@ -276,7 +275,6 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
         ex_line,
         messages,
         last_key,
-        which_key_since,
         detail,
         poller,
         poller_uri,
@@ -305,9 +303,6 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
             } => app.on_live(msg),
             Some(loaded) = loads_rx.recv() => app.on_loaded(loaded),
             _ = ticker.tick() => app.on_tick().await,
-            _ = tokio::time::sleep(Duration::from_millis(100)), if app.engine.has_pending_digits() => {
-                app.on_digit_timeout();
-            }
             maybe = events.recv() => {
                 match maybe {
                     Some(Event::Key(key)) => {
@@ -353,7 +348,6 @@ struct App {
     ex_line: Option<crate::input::textinput::TextInput>,
     messages: Vec<String>,
     last_key: std::time::Instant,
-    which_key_since: Option<std::time::Instant>,
     detail: Option<ui::views::detail::DetailState>,
     poller: Option<poller::Poller>,
     poller_uri: String,
@@ -597,11 +591,7 @@ impl App {
                     render_completion(f, &self.theme, c);
                 }
             }
-            if let Some(prefix) = self.engine.pending_prefix()
-                && self
-                    .which_key_since
-                    .is_some_and(|t| t.elapsed().as_millis() >= 300)
-            {
+            if let Some(prefix) = self.engine.pending_prefix() {
                 render_which_key(f, &self.theme, &prefix);
             }
             if let Some(wz) = &self.wizard {
@@ -769,15 +759,6 @@ impl App {
         }
     }
 
-    /// Resolve pending count digits after the 300 ms timeout.
-    fn on_digit_timeout(&mut self) {
-        if self.last_key.elapsed().as_millis() >= 300 {
-            for resolved in self.engine.flush() {
-                switch_view(resolved.action, &mut self.view);
-            }
-        }
-    }
-
     /// Handle one key press. Returns true when the app should quit.
     async fn on_key(&mut self, key: KeyEvent) -> bool {
         let before = self.messages.len();
@@ -818,9 +799,6 @@ impl App {
             return false;
         }
         self.last_key = std::time::Instant::now();
-        if self.engine.pending_prefix().is_some() && self.which_key_since.is_none() {
-            self.which_key_since = Some(std::time::Instant::now());
-        }
         // C-c always quits; `q`/`ZZ` are checked only after the overlays that
         // take text input (ex line, palette, wizard, confirm, forms) had their turn.
         if key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('c') {
@@ -1441,9 +1419,7 @@ impl App {
             }
             if self.demo {}
         }
-        if self.engine.pending_prefix().is_none() {
-            self.which_key_since = None;
-        }
+
         false
     }
 }

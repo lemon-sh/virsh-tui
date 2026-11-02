@@ -77,8 +77,7 @@ pub fn default_map() -> HashMap<Vec<String>, KeyAction> {
     bind(&["]"], KeyAction::NextTab);
     bind(&["u"], KeyAction::UndoField);
     bind(&["g", "x"], KeyAction::GotoXml);
-    // View tabs: single digits resolve via KeyEngine::flush after an idle
-    // timeout, so counts (15j) keep working while plain 1-5 switch views.
+    // View tabs: instant 1-5 view switches.
     bind(&["1"], KeyAction::ViewDomains);
     bind(&["2"], KeyAction::ViewHost);
     bind(&["3"], KeyAction::ViewNetworks);
@@ -91,7 +90,6 @@ pub fn default_map() -> HashMap<Vec<String>, KeyAction> {
     bind(&[","], KeyAction::Settings);
     bind(&["C-r"], KeyAction::Refresh);
     bind(&["C-l"], KeyAction::Redraw);
-    // "." repeat is handled explicitly by the engine before map lookup.
     // Confirm modal keys (y/n) are handled by the modal itself, not the global map,
     // so that yank sequences (yy/yu/yi/yc) keep working.
     // Quit keys (q/ZZ/C-c) are handled at the app level for the same reason:

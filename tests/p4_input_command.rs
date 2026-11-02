@@ -1,15 +1,19 @@
 //! P4 input + command tests (RED first).
 
 #[test]
-fn key_engine_count_and_sequence() {
+fn key_engine_instant_tab_and_sequence() {
     use virsh_tui::input::{engine::KeyEngine, key::KeySeq};
     let mut eng = KeyEngine::new();
-    // 3j => count 3, action MoveDown.
+    // 3 switches to Networks tab instantly
     let actions = eng.feed(&KeySeq::parse("3"));
-    assert!(actions.is_empty());
+    assert_eq!(actions.len(), 1);
+    assert_eq!(
+        actions[0].action,
+        virsh_tui::input::engine::KeyAction::ViewNetworks
+    );
     let actions = eng.feed(&KeySeq::parse("j"));
     assert_eq!(actions.len(), 1);
-    assert_eq!(actions[0].count, 3);
+    assert_eq!(actions[0].action, virsh_tui::input::engine::KeyAction::MoveDown);
 }
 
 #[test]

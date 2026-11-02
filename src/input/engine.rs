@@ -217,8 +217,6 @@ pub struct ResolvedAction {
 pub struct KeyEngine {
     map: HashMap<Vec<String>, KeyAction>,
     pending: Vec<String>,
-    count_buf: String,
-    last_mutating: Option<(KeyAction, u32)>,
 }
 
 impl KeyEngine {
@@ -237,34 +235,14 @@ impl KeyEngine {
         Self {
             map,
             pending: Vec::new(),
-            count_buf: String::new(),
-            last_mutating: None,
         }
     }
 
     /// Feed one normalized token. Returns resolved actions (0 or 1).
-    ///
-    /// Digits always accumulate as a count prefix (single `1`-`5` become view
-    /// switches only via [`KeyEngine::flush`] after an idle timeout).
     pub fn feed(&mut self, key: &KeySeq) -> Vec<ResolvedAction> {
         let tok = key.token().to_string();
         if tok == "Esc" {
             self.pending.clear();
-            self.count_buf.clear();
-            return vec![];
-        }
-        if tok.chars().all(|c| c.is_ascii_digit()) && self.pending.is_empty() {
-            self.count_buf.push_str(&tok);
-            return vec![];
-        }
-        // Dot thirst: repeat last mutating action — but "." is also bound to repeat,
-        // handle explicitly.
-        if tok == "." && self.pending.is_empty() {
-            if let Some((action, _)) = self.last_mutating {
-                let count = self.take_count();
-                self.last_mutating = Some((action, count));
-                return vec![ResolvedAction { action, count }];
-            }
             return vec![];
         }
         let mut candidate = self.pending.clone();
@@ -278,7 +256,6 @@ impl KeyEngine {
         }
         // No match: reset and try the token alone.
         self.pending.clear();
-        self.count_buf.clear();
         if self.is_full_binding(&[key.token().to_string()]) {
             return self.resolve(vec![key.token().to_string()]);
         }
@@ -294,25 +271,13 @@ impl KeyEngine {
         }
     }
 
-    /// True while digits wait for a command or the idle timeout.
+    /// True while digits wait for a command (always false: count system removed).
     pub fn has_pending_digits(&self) -> bool {
-        !self.count_buf.is_empty() && self.pending.is_empty()
+        false
     }
 
-    /// Idle-timeout flush: a lone digit resolves through the keymap (by default
-    /// `1`-`5` switch views); anything else (multi-digit counts with no command)
-    /// is cancelled.
+    /// Idle-timeout flush stub (count system removed).
     pub fn flush(&mut self) -> Vec<ResolvedAction> {
-        if !self.pending.is_empty() {
-            return vec![];
-        }
-        if self.count_buf.len() == 1 {
-            let seq = vec![self.count_buf.clone()];
-            if self.is_full_binding(&seq) {
-                return self.resolve(seq);
-            }
-        }
-        self.count_buf.clear();
         vec![]
     }
 
@@ -326,23 +291,10 @@ impl KeyEngine {
             .any(|k| k.len() > seq.len() && k[..seq.len()] == *seq)
     }
 
-    fn take_count(&mut self) -> u32 {
-        if self.count_buf.is_empty() {
-            1
-        } else {
-            self.count_buf.parse().unwrap_or(1)
-        }
-    }
-
     fn resolve(&mut self, seq: Vec<String>) -> Vec<ResolvedAction> {
         let action = self.map[&seq];
         self.pending.clear();
-        let count = self.take_count();
-        self.count_buf.clear();
-        if action.mutating() {
-            self.last_mutating = Some((action, count));
-        }
-        vec![ResolvedAction { action, count }]
+        vec![ResolvedAction { action, count: 1 }]
     }
 }
 
@@ -358,12 +310,12 @@ mod tests {
     use crate::input::key::KeySeq;
 
     #[test]
-    fn counts_and_repeat() {
+    fn instant_view_tabs() {
         let mut eng = KeyEngine::new();
-        assert!(eng.feed(&KeySeq::parse("3")).is_empty());
-        let a = eng.feed(&KeySeq::parse("j"));
-        assert_eq!(a[0].count, 3);
-        assert_eq!(a[0].action, KeyAction::MoveDown);
+        let a = eng.feed(&KeySeq::parse("1"));
+        assert_eq!(a[0].action, KeyAction::ViewDomains);
+        let a = eng.feed(&KeySeq::parse("2"));
+        assert_eq!(a[0].action, KeyAction::ViewHost);
     }
 
     #[test]

@@ -321,11 +321,10 @@ pub fn render(frame: &mut Frame, theme: &Theme, filter: &str, map: &Keymap) {
         }
         frame.render_widget(Paragraph::new(lines).style(theme.base()), *col);
     }
-    let footer = Line::from(vec![
-        Span::styled("● asks for confirmation  ", Style::default().fg(t.red).bg(t.bg)),
-        Span::styled("3j counts work everywhere  ", theme.key()),
-        Span::styled(". repeats last action", theme.dim()),
-    ]);
+    let footer = Line::from(vec![Span::styled(
+        "● asks for confirmation",
+        Style::default().fg(t.red).bg(t.bg),
+    )]);
     let footer_area = Rect::new(inner.x, inner.y + inner.height - 1, inner.width, 1);
     frame.render_widget(Paragraph::new(footer).style(theme.base()), footer_area);
 }

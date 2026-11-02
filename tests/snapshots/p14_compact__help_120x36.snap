@@ -34,5 +34,5 @@ expression: "shot(120, 36, |f|\noverlays::help::render(f, &th, \"\", &virsh_tui:
   │                                                                                                                  │  
   │                                                                                                                  │  
   │                                                                                                                  │  
-  │ ● asks for confirmation  3j counts work everywhere  . repeats last action                                        │  
+  │ ● asks for confirmation                                                                                          │  
   ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯

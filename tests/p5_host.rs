@@ -17,23 +17,12 @@ fn parse_meminfo_total() {
 }
 
 #[test]
-fn engine_digit_flush_switches_view() {
+fn engine_digit_switches_view_instantly() {
     use virsh_tui::input::{engine::KeyEngine, key::KeySeq};
     let mut eng = KeyEngine::new();
-    assert!(eng.feed(&KeySeq::parse("2")).is_empty());
-    let flushed = eng.flush();
-    assert_eq!(flushed.len(), 1);
-    assert_eq!(flushed[0].action, virsh_tui::input::engine::KeyAction::ViewHost);
-}
-
-#[test]
-fn engine_multidigit_count_still_works() {
-    use virsh_tui::input::{engine::KeyEngine, key::KeySeq};
-    let mut eng = KeyEngine::new();
-    assert!(eng.feed(&KeySeq::parse("1")).is_empty());
-    assert!(eng.feed(&KeySeq::parse("5")).is_empty());
-    let a = eng.feed(&KeySeq::parse("j"));
-    assert_eq!(a[0].count, 15);
+    let actions = eng.feed(&KeySeq::parse("2"));
+    assert_eq!(actions.len(), 1);
+    assert_eq!(actions[0].action, virsh_tui::input::engine::KeyAction::ViewHost);
 }
 
 #[test]
