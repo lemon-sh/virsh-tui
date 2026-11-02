@@ -50,6 +50,9 @@ pub async fn execute(uri: &str, plan: &CommandPlan, dry_run: bool) -> Result<Str
         cmd.stdout(std::process::Stdio::piped());
         cmd.stderr(std::process::Stdio::piped());
         cmd.kill_on_drop(true);
+        if crate::backend::virsh::exec::is_detach_tty() {
+            crate::backend::virsh::exec::detach_controlling_tty(&mut cmd);
+        }
         let limit = crate::backend::virsh::exec::timeout_for(
             &step.program,
             step.argv.first().map(String::as_str).unwrap_or(""),
@@ -58,11 +61,7 @@ pub async fn execute(uri: &str, plan: &CommandPlan, dry_run: bool) -> Result<Str
             .await
             .map_err(|_| eyre!("step {}/{} timed out", i + 1, n))??;
         if !output.status.success() {
-            let first_line = String::from_utf8_lossy(&output.stderr)
-                .lines()
-                .next()
-                .unwrap_or("unknown error")
-                .to_string();
+            let first_line = crate::backend::virsh::exec::friendly_first_line(&output.stderr);
             return Err(eyre!("✗ step {}/{} failed: {first_line}", i + 1, n));
         }
     }

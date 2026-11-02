@@ -138,8 +138,8 @@ async fn stream_once(
 ) -> color_eyre::Result<()> {
     use tokio::io::{AsyncBufReadExt, BufReader};
     use tokio::process::Command;
-    let mut child = Command::new("virsh")
-        .arg("-c")
+    let mut cmd = Command::new("virsh");
+    cmd.arg("-c")
         .arg(uri)
         .arg(sub)
         .args(filter)
@@ -149,8 +149,9 @@ async fn stream_once(
         .stdout(std::process::Stdio::piped())
         // Never inherit stderr: it would draw over the TUI.
         .stderr(std::process::Stdio::null())
-        .kill_on_drop(true)
-        .spawn()?;
+        .kill_on_drop(true);
+    crate::backend::virsh::exec::detach_controlling_tty(&mut cmd);
+    let mut child = cmd.spawn()?;
     let stdout = child
         .stdout
         .take()

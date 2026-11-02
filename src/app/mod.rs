@@ -54,6 +54,25 @@ fn current_theme(config: &Config) -> Theme {
     theme
 }
 
+struct TerminalGuard;
+
+impl TerminalGuard {
+    fn enter() -> Result<Self> {
+        crossterm::terminal::enable_raw_mode()?;
+        crossterm::execute!(std::io::stdout(), crossterm::terminal::EnterAlternateScreen)?;
+        crate::backend::virsh::exec::set_detach_tty(true);
+        Ok(Self)
+    }
+}
+
+impl Drop for TerminalGuard {
+    fn drop(&mut self) {
+        crate::backend::virsh::exec::set_detach_tty(false);
+        let _ = crossterm::execute!(std::io::stdout(), crossterm::terminal::LeaveAlternateScreen);
+        let _ = crossterm::terminal::disable_raw_mode();
+    }
+}
+
 /// Run the TUI until quit.
 pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
     let mut config = config.clone();
@@ -156,7 +175,7 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
     let settings: Option<ui::views::settings::SettingsState> = None;
     let palette: Option<ui::overlays::palette::PaletteState> = None;
     let help_filter: Option<String> = None;
-    let events_rx = if cli.demo {
+    let events_rx = if cli.demo || !dash.connected {
         None
     } else {
         Some(crate::backend::virsh::events::subscribe(&cli.connect))
@@ -194,6 +213,7 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
         return Ok(());
     }
 
+    let _terminal_guard = TerminalGuard::enter()?;
     let backend = CrosstermBackend::new(std::io::stdout());
     let mut terminal = Terminal::new(backend)?;
     terminal.clear()?;
@@ -224,7 +244,7 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
     let mut entered: std::collections::HashSet<View> = std::collections::HashSet::new();
     entered.insert(view);
     let (loads_tx, mut loads_rx) = tokio::sync::mpsc::unbounded_channel();
-    if !cli.demo {
+    if !cli.demo && dash.connected {
         for v in [View::Host, View::Networks, View::Storage] {
             spawn_load(&cli.connect, v, &loads_tx);
         }

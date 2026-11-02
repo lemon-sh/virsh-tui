@@ -65,7 +65,9 @@ pub fn with_suspended_terminal<T>(f: impl FnOnce() -> T) -> T {
         crossterm::cursor::Show
     );
     let _ = crossterm::terminal::disable_raw_mode();
+    crate::backend::virsh::exec::set_detach_tty(false);
     let out = f();
+    crate::backend::virsh::exec::set_detach_tty(true);
     let _ = crossterm::terminal::enable_raw_mode();
     let _ = crossterm::execute!(
         std::io::stdout(),

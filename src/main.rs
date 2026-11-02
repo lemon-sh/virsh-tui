@@ -59,15 +59,12 @@ fn run_tui(cli: &Cli, config: &Config) -> Result<()> {
         let runtime = tokio::runtime::Builder::new_multi_thread().enable_all().build()?;
         return runtime.block_on(app::run(cli, config));
     }
-    let mut stdout = std::io::stdout();
-    crossterm::terminal::enable_raw_mode()?;
-    crossterm::execute!(stdout, crossterm::terminal::EnterAlternateScreen)?;
     let runtime = tokio::runtime::Builder::new_multi_thread().enable_all().build()?;
     let result = runtime.block_on(async {
         install_signal_hook();
         app::run(cli, config).await
     });
-    let _ = crossterm::execute!(stdout, crossterm::terminal::LeaveAlternateScreen);
+    let _ = crossterm::execute!(std::io::stdout(), crossterm::terminal::LeaveAlternateScreen);
     let _ = crossterm::terminal::disable_raw_mode();
     result
 }
