@@ -245,38 +245,36 @@ fn rgb(hex: &str) -> Color {
     Color::Rgb(r, g, b)
 }
 
-/// Nearest xterm-256 index for an RGB colour (6x6x6 cube + greyscale).
+/// Nearest xterm-256 index for an RGB colour (6x6x6 cube + greyscale nearest match).
 pub fn xterm256(color: Color) -> u8 {
     let (r, g, b) = match color {
         Color::Rgb(r, g, b) => (r, g, b),
         _ => return 7,
     };
-    // Greyscale ramp.
-    if r == g && g == b {
-        if r < 8 {
-            return 16;
-        }
-        if r > 248 {
-            return 231;
-        }
-        return (232.0 + ((f64::from(r) - 8.0) / 10.0).round()) as u8;
-    }
-    let level = |v: u8| {
-        if v < 48 {
-            0
-        } else if v < 115 {
-            1
-        } else if v < 155 {
-            2
-        } else if v < 195 {
-            3
-        } else if v < 235 {
-            4
+    let mut best_idx = 16u8;
+    let mut best_dist = u32::MAX;
+    for idx in 16..=255u8 {
+        let (cr, cg, cb) = if idx <= 231 {
+            let n = idx - 16;
+            let bi = n % 6;
+            let gi = (n / 6) % 6;
+            let ri = n / 36;
+            let c = |v: u8| if v == 0 { 0 } else { 55 + 40 * v };
+            (c(ri), c(gi), c(bi))
         } else {
-            5
+            let v = 8 + 10 * (idx - 232);
+            (v, v, v)
+        };
+        let dr = (r as i32) - (cr as i32);
+        let dg = (g as i32) - (cg as i32);
+        let db = (b as i32) - (cb as i32);
+        let dist = (dr * dr + dg * dg + db * db) as u32;
+        if dist < best_dist {
+            best_dist = dist;
+            best_idx = idx;
         }
-    };
-    16 + 36 * level(r) + 6 * level(g) + level(b)
+    }
+    best_idx
 }
 
 /// Downgrade a theme to xterm-256 indexes when truecolor is unavailable.
@@ -306,14 +304,45 @@ pub fn downgrade(mut theme: Theme) -> Theme {
     theme
 }
 
-/// Truecolor available (`COLORTERM=truecolor|24bit`).
+/// Truecolor available (`COLORTERM=truecolor|24bit`, known 24-bit terminal, or Windows console).
 pub fn truecolor() -> bool {
-    std::env::var("COLORTERM")
-        .map(|v| {
-            let v = v.to_lowercase();
-            v.contains("truecolor") || v.contains("24bit")
-        })
-        .unwrap_or(false)
+    if let Ok(v) = std::env::var("COLORTERM") {
+        let v = v.to_lowercase();
+        return v.contains("truecolor") || v.contains("24bit");
+    }
+    if let Ok(tp) = std::env::var("TERM_PROGRAM") {
+        let tp = tp.to_lowercase();
+        if matches!(
+            tp.as_str(),
+            "vscode" | "iterm.app" | "apple_terminal" | "wezterm" | "ghostty" | "hyper" | "alacritty"
+        ) {
+            return true;
+        }
+    }
+    if let Ok(term) = std::env::var("TERM") {
+        let term = term.to_lowercase();
+        if term.contains("truecolor")
+            || term.contains("24bit")
+            || term.contains("direct")
+            || term.contains("kitty")
+            || term.contains("alacritty")
+            || term.contains("foot")
+            || term.contains("wezterm")
+        {
+            return true;
+        }
+    }
+    if std::env::var("WT_SESSION").is_ok() {
+        return true;
+    }
+    #[cfg(windows)]
+    {
+        true
+    }
+    #[cfg(not(windows))]
+    {
+        false
+    }
 }
 
 #[cfg(test)]

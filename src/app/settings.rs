@@ -60,7 +60,11 @@ pub(super) fn move_settings(
             st.move_theme(delta);
             // Live preview of the whole app.
             let (base, _) = ui::views::settings::resolve(st.selected_theme());
-            *theme = ui::views::settings::apply_appearance(base, config);
+            let mut t = ui::views::settings::apply_appearance(base, config);
+            if !crate::theme::truecolor() {
+                t = crate::theme::downgrade(t);
+            }
+            *theme = t;
         }
         SettingsPane::Options => {
             let n = ui::views::settings::option_count(category(st), config).max(1) as i32;

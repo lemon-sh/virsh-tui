@@ -262,8 +262,10 @@ pub fn render(frame: &mut Frame, theme: &Theme, filter: &str, map: &Keymap) {
         .borders(Borders::ALL)
         .border_type(theme.border)
         .border_style(Style::default().fg(t.blue).bg(t.bg))
+        .style(theme.base())
         .title(Span::styled(" ? Keybindings ", theme.panel_title(true)))
         .title_top(Line::from(Span::styled(" / search · ⎋ close ", theme.dim())).right_aligned());
+    frame.render_widget(block, modal);
     let inner = Rect::new(modal.x + 2, modal.y + 1, modal.width - 4, modal.height - 2);
     let cols = Layout::default()
         .direction(Direction::Horizontal)
@@ -326,5 +328,4 @@ pub fn render(frame: &mut Frame, theme: &Theme, filter: &str, map: &Keymap) {
     ]);
     let footer_area = Rect::new(inner.x, inner.y + inner.height - 1, inner.width, 1);
     frame.render_widget(Paragraph::new(footer).style(theme.base()), footer_area);
-    frame.render_widget(block, modal);
 }
