@@ -8,6 +8,7 @@ use ratatui::{
     widgets::{Block, Paragraph},
 };
 
+use crate::app::poller::is_local_uri;
 use crate::theme::Theme;
 use crate::ui::widgets::charts::{self, BrailleMode};
 
@@ -145,6 +146,55 @@ impl HostState {
         }
     }
 
+    /// Live state for a remote hypervisor host (queries virsh, no local /proc access).
+    pub async fn live_remote(uri: &str) -> Self {
+        use crate::backend::{Backend, virsh::VirshBackend};
+        let backend = VirshBackend::new(uri);
+        let info = backend.host_info().await.unwrap_or_default();
+        let (_cpu_pct, node_mem) = backend.node_stats().await.unwrap_or((None, None));
+        let gib = |k: u64| (k as f64 / 1024.0 / 1024.0 * 10.0).round() / 10.0;
+
+        let (mem_total, mem_used, mem_free) = if let Some(m) = node_mem {
+            (
+                gib(m.total_kib),
+                gib(m.total_kib.saturating_sub(m.available_kib)),
+                gib(m.available_kib),
+            )
+        } else {
+            (gib(info.mem_kib), 0.0, gib(info.mem_kib))
+        };
+
+        Self {
+            cpu_model: short_model(&info.cpu_model),
+            cpu_frac: 0.0,
+            ghz: 0.0,
+            temp_c: None,
+            load: (0.0, 0.0, 0.0),
+            threads: vec![],
+            threads_total: info.threads,
+            mem_total_gib: mem_total,
+            mem_used_gib: mem_used,
+            mem_free_gib: mem_free,
+            rss_by_domain: vec![],
+            hugepages: String::from("—"),
+            ksm: String::from("—"),
+            swap: String::from("—"),
+            domains: vec![],
+            vcpu_total: 0,
+            pools: vec![],
+            pools_active: String::from("—"),
+            nets: vec![],
+            nets_active: String::from("—"),
+            system: vec![],
+            cpu_hist: Some(Vec::new()),
+            live: true,
+            selected: 0,
+            message: String::from("-- sampling virsh domstats every 1000 ms --"),
+            uri: uri.to_string(),
+            connected: true,
+        }
+    }
+
     /// Refresh from the shared live metrics (called every tick while visible).
     pub fn apply_live(&mut self, dash: &crate::ui::views::dashboard::DashboardState) {
         use crate::metrics::store::{fmt_bits_rate, fmt_bytes_rate, normalize};
@@ -164,14 +214,25 @@ impl HostState {
             self.threads.clone_from(&m.host.threads);
             self.threads_total = self.threads.len() as u32;
         }
-        let mem = crate::backend::virsh::host_local::parse_meminfo(
-            &std::fs::read_to_string("/proc/meminfo").unwrap_or_default(),
-        );
-        if mem.total_kib > 0 {
-            let gib = |k: u64| (k as f64 / 1024.0 / 1024.0 * 10.0).round() / 10.0;
-            self.mem_total_gib = gib(mem.total_kib);
-            self.mem_used_gib = gib(mem.total_kib.saturating_sub(mem.available_kib));
-            self.mem_free_gib = gib(mem.available_kib);
+        if is_local_uri(&self.uri) {
+            let mem = crate::backend::virsh::host_local::parse_meminfo(
+                &std::fs::read_to_string("/proc/meminfo").unwrap_or_default(),
+            );
+            if mem.total_kib > 0 {
+                let gib = |k: u64| (k as f64 / 1024.0 / 1024.0 * 10.0).round() / 10.0;
+                self.mem_total_gib = gib(mem.total_kib);
+                self.mem_used_gib = gib(mem.total_kib.saturating_sub(mem.available_kib));
+                self.mem_free_gib = gib(mem.available_kib);
+            }
+        } else if let Some((_, _, val)) = dash.host_gauges.iter().find(|(k, _, _)| k == "RAM") {
+            let val = val.trim();
+            if let Some((used_s, total_s)) = val.split_once('/') {
+                let used = used_s.trim().parse::<f64>().unwrap_or(0.0);
+                let total = total_s.trim_end_matches('G').trim().parse::<f64>().unwrap_or(0.0);
+                self.mem_total_gib = total;
+                self.mem_used_gib = used;
+                self.mem_free_gib = (total - used).max(0.0);
+            }
         }
         self.rss_by_domain = m
             .rss_by_domain()
@@ -583,31 +644,47 @@ fn render_cpu(frame: &mut Frame, theme: &Theme, state: &HostState, area: Rect, m
             ])
         })
         .collect();
-    lines.push(Line::from(Span::styled(
-        format!("per-thread {}", "─".repeat(inner_w)),
-        theme.dim(),
-    )));
-    if meters && !state.threads.is_empty() {
-        render_meters(theme, state, inner_w, &mut lines);
-    } else if meters {
+    let local = is_local_uri(&state.uri);
+    if local {
         lines.push(Line::from(Span::styled(
-            "     per-thread sampling is off (Settings › Monitoring)",
+            format!("per-thread {}", "─".repeat(inner_w)),
+            theme.dim(),
+        )));
+        if meters && !state.threads.is_empty() {
+            render_meters(theme, state, inner_w, &mut lines);
+        } else if meters {
+            lines.push(Line::from(Span::styled(
+                "     per-thread sampling is off (Settings › Monitoring)",
+                theme.dim(),
+            )));
+        }
+    } else {
+        lines.push(Line::from(Span::styled(
+            "     per-thread meters, temperature, and frequency are unavailable on remote hosts",
             theme.dim(),
         )));
     }
-    let temp = state
-        .temp_c
-        .map(|c| format!("{c:.0}°C"))
-        .unwrap_or_else(|| String::from("—"));
-    let right = format!(
-        "{}% · {:.1} GHz · {} · load {:.2} {:.2} {:.2}",
-        (state.cpu_frac * 100.0).round() as u32,
-        state.ghz,
-        temp,
-        state.load.0,
-        state.load.1,
-        state.load.2
-    );
+    let right = if local {
+        let temp = state
+            .temp_c
+            .map(|c| format!("{c:.0}°C"))
+            .unwrap_or_else(|| String::from("—"));
+        format!(
+            "{}% · {:.1} GHz · {} · load {:.2} {:.2} {:.2}",
+            (state.cpu_frac * 100.0).round() as u32,
+            state.ghz,
+            temp,
+            state.load.0,
+            state.load.1,
+            state.load.2
+        )
+    } else {
+        format!(
+            "{}% · {} CPUs",
+            (state.cpu_frac * 100.0).round() as u32,
+            state.threads_total
+        )
+    };
     let title = format!("CPU · {}", state.cpu_model);
     let block = panel_block(theme, false, &title, Some(right));
     frame.render_widget(Paragraph::new(lines).block(block).style(theme.base()), area);

@@ -7,7 +7,11 @@ use super::*;
 /// Build live host state: local /proc data plus virsh pools/networks/domains.
 pub(super) async fn fill_live_host(uri: &str) -> ui::views::host::HostState {
     use crate::backend::{Backend, virsh::VirshBackend};
-    let mut host = ui::views::host::HostState::live_local().await;
+    let mut host = if is_local_uri(uri) {
+        ui::views::host::HostState::live_local().await
+    } else {
+        ui::views::host::HostState::live_remote(uri).await
+    };
     host.uri = uri.to_string();
     host.connected = true;
     host.system = host_system_facts(uri).await;
@@ -101,6 +105,7 @@ pub(super) fn apply_live_msg(uri: &str, dash: &mut ui::views::dashboard::Dashboa
             proc_stat,
             uptimes,
             ifaces,
+            remote_host,
             at,
         } => {
             dash.metrics.ingest_ifaces(&ifaces, at);
@@ -113,6 +118,10 @@ pub(super) fn apply_live_msg(uri: &str, dash: &mut ui::views::dashboard::Dashboa
             dash.metrics.ingest_domains(&stats, at);
             if let Some(stat) = proc_stat {
                 dash.metrics.ingest_proc_stat(&stat);
+            } else if let Some(rh) = &remote_host
+                && let Some(cpu_pct) = rh.cpu_pct
+            {
+                dash.metrics.host.cpu.push(cpu_pct as f32);
             }
             dash.apply_metrics();
             dash.check_shutdowns();
@@ -123,6 +132,8 @@ pub(super) fn apply_live_msg(uri: &str, dash: &mut ui::views::dashboard::Dashboa
             dash.connected = true;
             if is_local_uri(uri) {
                 update_host_gauges(dash);
+            } else if let Some(rh) = &remote_host {
+                update_remote_host_gauges(dash, rh);
             }
         }
         LiveMsg::Failed(e) => {
@@ -210,6 +221,45 @@ pub(super) fn update_host_gauges(dash: &mut ui::views::dashboard::DashboardState
     }
     if let Some(p) = it.next() {
         g.insert(3, p);
+    }
+    dash.host_gauges = g;
+}
+
+/// Host panel gauges from remote telemetry plus cached pool gauges.
+pub(super) fn update_remote_host_gauges(
+    dash: &mut ui::views::dashboard::DashboardState,
+    rh: &poller::RemoteHostSample,
+) {
+    let gib = |kib: u64| kib as f64 / 1024.0 / 1024.0;
+    let frac = |used: u64, total: u64| {
+        if total == 0 {
+            0.0
+        } else {
+            used as f64 / total as f64
+        }
+    };
+    let cpu = f64::from(dash.metrics.host.cpu.last().unwrap_or(0.0)) / 100.0;
+    let mut g = vec![(String::from("CPU"), cpu, format!("{:.0}%", cpu * 100.0))];
+    if let Some(mem) = &rh.mem
+        && mem.total_kib > 0
+    {
+        let used = mem.total_kib.saturating_sub(mem.available_kib);
+        g.push((
+            String::from("RAM"),
+            frac(used, mem.total_kib),
+            format!("{:.1}/{:.0}G", gib(used), gib(mem.total_kib)),
+        ));
+    }
+    let mut it = dash.host_pools.clone().into_iter();
+    if let Some(p) = it.next() {
+        g.insert(1, p);
+    }
+    if let Some(p) = it.next() {
+        if g.len() >= 3 {
+            g.insert(3, p);
+        } else {
+            g.push(p);
+        }
     }
     dash.host_gauges = g;
 }
@@ -798,6 +848,12 @@ async fn host_system_facts(uri: &str) -> Vec<(String, String)> {
         out.push((
             String::from("uptime   "),
             crate::backend::virsh::host_local::fmt_uptime(up as u64),
+        ));
+    } else if let Ok(nodeinfo) = crate::backend::virsh::exec::run(uri, &["nodeinfo"]).await {
+        let info = crate::backend::virsh::host_local::parse_nodeinfo(&nodeinfo, "remote");
+        out.push((
+            String::from("cpus     "),
+            format!("{} threads · {}", info.threads, info.cpu_model),
         ));
     }
     out

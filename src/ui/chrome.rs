@@ -4,8 +4,6 @@
 //! message colouring are identical everywhere. In live mode the hostname and
 //! clock are real; demo/tests keep the mockup values (`forge`, frozen time).
 
-use std::sync::OnceLock;
-
 use ratatui::{
     Frame,
     layout::Rect,
@@ -23,16 +21,18 @@ pub struct LiveChrome {
     pub refresh_secs: u64,
 }
 
-static LIVE: OnceLock<LiveChrome> = OnceLock::new();
+static LIVE: std::sync::RwLock<Option<LiveChrome>> = std::sync::RwLock::new(None);
 
 /// Switch the chrome to live values (real hostname + wall clock).
 pub fn set_live(info: LiveChrome) {
-    let _ = LIVE.set(info);
+    if let Ok(mut g) = LIVE.write() {
+        *g = Some(info);
+    }
 }
 
 /// True once live mode is active (false in demo and tests).
 pub fn is_live() -> bool {
-    LIVE.get().is_some()
+    LIVE.read().ok().and_then(|g| g.clone()).is_some()
 }
 
 const TABS: [(&str, &str); 5] = [
@@ -78,8 +78,8 @@ pub fn topbar(
         ));
         left.push(Span::styled(format!(" {label} "), label_style));
     }
-    let (host, refresh, time) = match LIVE.get() {
-        Some(l) => (l.hostname.clone(), format!("{}s", l.refresh_secs), now_hms()),
+    let (host, refresh, time) = match LIVE.read().ok().and_then(|g| g.clone()) {
+        Some(l) => (l.hostname, format!("{}s", l.refresh_secs), now_hms()),
         None => (String::from("forge"), String::from("1s"), demo_time.to_string()),
     };
     let dim = Style::default().fg(t.comment).bg(t.bg2);
@@ -122,7 +122,7 @@ pub fn topbar_settings(frame: &mut Frame, theme: &Theme, area: Rect, demo_time: 
             Style::default().fg(t.comment).bg(t.bg2),
         ));
     }
-    let time = if LIVE.get().is_some() {
+    let time = if is_live() {
         now_hms()
     } else {
         demo_time.to_string()
