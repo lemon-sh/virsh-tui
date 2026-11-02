@@ -61,6 +61,29 @@ pub fn detach_controlling_tty_sync(cmd: &mut std::process::Command) {
     }
 }
 
+/// Check if the `virsh` binary is available and executable in PATH.
+pub fn is_virsh_available() -> bool {
+    std::process::Command::new("virsh")
+        .arg("-v")
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .output()
+        .map(|out| out.status.success())
+        .unwrap_or(false)
+}
+
+/// Verify that `virsh` is available in PATH, returning an actionable error if missing.
+pub fn ensure_virsh_available() -> Result<()> {
+    if is_virsh_available() {
+        Ok(())
+    } else {
+        Err(eyre!(
+            "'virsh' not found in PATH. Please install libvirt client tools (virsh) to use virsh-tui, or run with --demo for demonstration mode."
+        ))
+    }
+}
+
 /// How long a virsh subcommand may run. Long jobs (migration, cloning, wiping,
 /// snapshots with memory, uploads) get hours; everything else 30 s.
 pub fn timeout_for(program: &str, sub: &str) -> std::time::Duration {
@@ -173,6 +196,21 @@ pub fn run_blocking(uri: &str, args: &[&str]) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn is_virsh_available_returns_boolean() {
+        let _ = is_virsh_available();
+    }
+
+    #[test]
+    fn ensure_virsh_available_matches_is_virsh_available() {
+        if is_virsh_available() {
+            assert!(ensure_virsh_available().is_ok());
+        } else {
+            let err = ensure_virsh_available().unwrap_err();
+            assert!(err.to_string().contains("not found in PATH"));
+        }
+    }
 
     #[test]
     fn friendly_first_line_polkit_hints() {

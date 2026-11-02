@@ -10,6 +10,8 @@ pub mod parse_list;
 pub mod parse_nodestats;
 pub mod parse_xml;
 
+pub use exec::{ensure_virsh_available, is_virsh_available};
+
 use color_eyre::Result;
 
 use super::{Backend, RawDomainStats};
@@ -31,22 +33,42 @@ impl VirshBackend {
         &self.uri
     }
 
+    /// Fetch domain names configured for autostart.
+    pub async fn autostart_domains(&self) -> Result<std::collections::HashSet<String>> {
+        let text = exec::run(&self.uri, &["list", "--all", "--autostart", "--name"]).await?;
+        Ok(text
+            .lines()
+            .map(str::trim)
+            .filter(|l| !l.is_empty())
+            .map(str::to_string)
+            .collect())
+    }
+
     /// One refresh: domain summaries plus the raw stats they were built from.
     ///
     /// `virsh domstats --raw` lists every domain (active and inactive) with its
     /// state, so a single call feeds both the table and the metrics store.
     pub async fn domains_with_stats(&self) -> Result<(Vec<DomainSummary>, Vec<RawDomainStats>)> {
+        self.domains_with_stats_cached(None).await
+    }
+
+    /// One refresh: domain summaries plus raw stats, reusing a cached autostart domain set.
+    ///
+    /// If `cached_autostart` is `None`, queries `virsh list --all --autostart --name`.
+    pub async fn domains_with_stats_cached(
+        &self,
+        cached_autostart: Option<&std::collections::HashSet<String>>,
+    ) -> Result<(Vec<DomainSummary>, Vec<RawDomainStats>)> {
         let stats_text = exec::run(&self.uri, &["domstats", "--raw"]).await?;
         let stats = parse_domstats::parse_domstats_raw(&stats_text)?;
-        let autostart: std::collections::HashSet<String> =
-            exec::run(&self.uri, &["list", "--all", "--autostart", "--name"])
-                .await
-                .unwrap_or_default()
-                .lines()
-                .map(str::trim)
-                .filter(|l| !l.is_empty())
-                .map(str::to_string)
-                .collect();
+        let fallback_autostart;
+        let autostart: &std::collections::HashSet<String> = match cached_autostart {
+            Some(cached) => cached,
+            None => {
+                fallback_autostart = self.autostart_domains().await.unwrap_or_default();
+                &fallback_autostart
+            }
+        };
         let summaries = stats
             .iter()
             .map(|s| DomainSummary {

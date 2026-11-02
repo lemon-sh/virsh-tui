@@ -105,6 +105,8 @@ pub fn spawn(uri: &str, interval_secs: u64, balloon_period: Option<u64>) -> Poll
         let mut ip_due = true;
         let mut ballooned: HashSet<String> = HashSet::new();
         let mut first_seen_running: HashMap<String, Instant> = HashMap::new();
+        let mut cached_autostart: Option<HashSet<String>> = None;
+        let mut cached_remote_host: Option<RemoteHostSample> = None;
         loop {
             let mut sample_now = false;
             tokio::select! {
@@ -135,11 +137,31 @@ pub fn spawn(uri: &str, interval_secs: u64, balloon_period: Option<u64>) -> Poll
                 continue;
             }
             tick += 1;
+            // Autostart configuration rarely changes; cache it for 30 ticks (30s)
+            // to eliminate redundant subprocess calls on every tick.
+            if (tick == 1 || tick.is_multiple_of(30) || cached_autostart.is_none())
+                && let Ok(auto) = backend.autostart_domains().await
+            {
+                cached_autostart = Some(auto);
+            }
+            // Throttle remote node telemetry (nodecpustats --percent blocks for 1 second).
+            // Sample every 3 ticks (~3s) on remote URIs, reusing cached metrics in between.
+            let sample_remote_node =
+                !local && (tick == 1 || tick.is_multiple_of(3) || cached_remote_host.is_none());
             let (dom_res, node_res) = if local {
-                (backend.domains_with_stats().await, None)
-            } else {
-                let (d, n) = tokio::join!(backend.domains_with_stats(), backend.node_stats());
+                (
+                    backend.domains_with_stats_cached(cached_autostart.as_ref()).await,
+                    None,
+                )
+            } else if sample_remote_node {
+                let (d, n) = tokio::join!(
+                    backend.domains_with_stats_cached(cached_autostart.as_ref()),
+                    backend.node_stats()
+                );
                 (d, Some(n))
+            } else {
+                let d = backend.domains_with_stats_cached(cached_autostart.as_ref()).await;
+                (d, None)
             };
             let msg = match dom_res {
                 Ok((summaries, stats)) => {
@@ -203,14 +225,18 @@ pub fn spawn(uri: &str, interval_secs: u64, balloon_period: Option<u64>) -> Poll
                         remote_host: if local {
                             None
                         } else {
-                            let (cpu_pct, mem) = node_res.and_then(Result::ok).unwrap_or((None, None));
-                            Some(RemoteHostSample { cpu_pct, mem })
+                            if let Some(Ok((cpu_pct, mem))) = node_res {
+                                cached_remote_host = Some(RemoteHostSample { cpu_pct, mem });
+                            }
+                            cached_remote_host.clone()
                         },
                         at: Instant::now(),
                     }
                 }
                 Err(e) => {
                     failures += 1;
+                    cached_autostart = None;
+                    cached_remote_host = None;
                     next_try = Instant::now() + Duration::from_secs(super::backoff::delay_secs(failures));
                     LiveMsg::Failed(e.to_string().lines().next().unwrap_or("").to_string())
                 }

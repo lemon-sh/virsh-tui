@@ -19,6 +19,10 @@ fn main() -> Result<()> {
         cli.connect = config.general.default_uri.clone();
     }
 
+    if !cli.demo {
+        virsh_tui::backend::virsh::ensure_virsh_available()?;
+    }
+
     if cli.probe {
         let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()

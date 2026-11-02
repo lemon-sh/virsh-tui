@@ -75,6 +75,9 @@ impl Drop for TerminalGuard {
 
 /// Run the TUI until quit.
 pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
+    if !cli.demo {
+        crate::backend::virsh::ensure_virsh_available()?;
+    }
     let mut config = config.clone();
     if let Some(theme) = &cli.theme {
         config.appearance.theme = theme.clone();
