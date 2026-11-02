@@ -82,6 +82,13 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
             Ok(summaries) => {
                 let mut d = ui::views::dashboard::DashboardState::from_summaries(&summaries);
                 d.connected = true;
+                if let Ok(h) = backend.hostname().await {
+                    d.hostname = h.clone();
+                    crate::ui::chrome::set_live(crate::ui::chrome::LiveChrome {
+                        hostname: h,
+                        refresh_secs: config.general.refresh_interval_secs.max(1),
+                    });
+                }
                 d
             }
             Err(e) => {
@@ -605,6 +612,15 @@ impl App {
             ));
             self.poller_uri.clone_from(&self.uri);
             self.sent_selection = None;
+            self.events_rx = Some(crate::backend::virsh::events::subscribe(&self.uri));
+            self.dash.uri.clone_from(&self.uri);
+            self.host.uri.clone_from(&self.uri);
+            self.nets.uri.clone_from(&self.uri);
+            self.store.uri.clone_from(&self.uri);
+            self.events_state.uri.clone_from(&self.uri);
+            self.detail = None;
+            self.virsh_index = None;
+            self.virsh_flags.clear();
         }
         // Tell the poller which domain is selected (config + IP are fetched for it).
         if let Some(p) = &self.poller {
@@ -633,6 +649,11 @@ impl App {
             self.nets.connected = false;
             self.store.connected = false;
             self.events_state.connected = false;
+        } else {
+            self.host.connected = self.dash.connected;
+            self.nets.connected = self.dash.connected;
+            self.store.connected = self.dash.connected;
+            self.events_state.connected = self.dash.connected;
         }
         apply_live_msg(&self.uri, &mut self.dash, msg);
         // Drain whatever else is ready so one redraw covers it all.

@@ -93,12 +93,28 @@ pub(super) fn apply_demo_transition(
 
 /// Re-fetch live domains after a mutation.
 pub(super) async fn refresh_live(uri: &str, dash: &mut crate::ui::views::dashboard::DashboardState) {
-    if let Ok((summaries, _)) = crate::backend::virsh::VirshBackend::new(uri)
-        .domains_with_stats()
-        .await
-    {
-        dash.apply_summaries(&summaries);
-        dash.apply_metrics();
+    let backend = crate::backend::virsh::VirshBackend::new(uri);
+    match backend.domains_with_stats().await {
+        Ok((summaries, _)) => {
+            dash.apply_summaries(&summaries);
+            dash.apply_metrics();
+            dash.connected = true;
+            dash.uri = uri.to_string();
+            dash.message.clear();
+            if let Ok(h) = backend.hostname().await {
+                dash.hostname = h.clone();
+                crate::ui::chrome::set_live(crate::ui::chrome::LiveChrome {
+                    hostname: h,
+                    refresh_secs: 1,
+                });
+            }
+        }
+        Err(e) => {
+            dash.apply_summaries(&[]);
+            dash.connected = false;
+            dash.uri = uri.to_string();
+            dash.message = format!("✗ connection to {uri} failed ({e})");
+        }
     }
 }
 
