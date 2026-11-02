@@ -12,6 +12,13 @@ use tokio::sync::mpsc;
 use crate::backend::{Backend, RawDomainStats, virsh::VirshBackend};
 use crate::model::{DomainConfig, DomainSummary, PoolSummary};
 
+/// Telemetry from a remote hypervisor host.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RemoteHostSample {
+    pub cpu_pct: Option<f64>,
+    pub mem: Option<crate::backend::virsh::parse_nodestats::NodeMemStats>,
+}
+
 /// Data produced by the poller.
 #[derive(Debug)]
 #[allow(clippy::large_enum_variant)] // one message per second; boxing buys nothing
@@ -24,6 +31,8 @@ pub enum LiveMsg {
         uptimes: HashMap<String, String>,
         /// rx/tx byte counters of host bridges (local URIs).
         ifaces: HashMap<String, (u64, u64)>,
+        /// Remote node CPU and memory telemetry (remote URIs).
+        remote_host: Option<RemoteHostSample>,
         at: Instant,
     },
     /// The refresh failed (connection lost); the poller backs off.
@@ -95,6 +104,7 @@ pub fn spawn(uri: &str, interval_secs: u64, balloon_period: Option<u64>) -> Poll
         let mut known: HashSet<String> = HashSet::new();
         let mut ip_due = true;
         let mut ballooned: HashSet<String> = HashSet::new();
+        let mut first_seen_running: HashMap<String, Instant> = HashMap::new();
         loop {
             let mut sample_now = false;
             tokio::select! {
@@ -125,7 +135,13 @@ pub fn spawn(uri: &str, interval_secs: u64, balloon_period: Option<u64>) -> Poll
                 continue;
             }
             tick += 1;
-            let msg = match backend.domains_with_stats().await {
+            let (dom_res, node_res) = if local {
+                (backend.domains_with_stats().await, None)
+            } else {
+                let (d, n) = tokio::join!(backend.domains_with_stats(), backend.node_stats());
+                (d, Some(n))
+            };
+            let msg = match dom_res {
                 Ok((summaries, stats)) => {
                     failures = 0;
                     if let Some(period) = balloon_period {
@@ -156,7 +172,23 @@ pub fn spawn(uri: &str, interval_secs: u64, balloon_period: Option<u64>) -> Poll
                             })
                             .collect()
                     } else {
-                        HashMap::new()
+                        let now = Instant::now();
+                        let running_names: HashSet<&str> = summaries
+                            .iter()
+                            .filter(|s| s.state == crate::model::DomainState::Running)
+                            .map(|s| s.name.as_str())
+                            .collect();
+                        first_seen_running.retain(|k, _| running_names.contains(k.as_str()));
+                        summaries
+                            .iter()
+                            .filter(|s| s.state == crate::model::DomainState::Running)
+                            .map(|s| {
+                                let start = first_seen_running.entry(s.name.clone()).or_insert(now);
+                                let elapsed = now.duration_since(*start).as_secs();
+                                let up_str = crate::backend::virsh::host_local::fmt_uptime(elapsed);
+                                (s.name.clone(), format!("≥ {up_str}"))
+                            })
+                            .collect()
                     };
                     LiveMsg::Sample {
                         summaries,
@@ -168,6 +200,12 @@ pub fn spawn(uri: &str, interval_secs: u64, balloon_period: Option<u64>) -> Poll
                         },
                         uptimes,
                         ifaces: if local { bridge_counters() } else { HashMap::new() },
+                        remote_host: if local {
+                            None
+                        } else {
+                            let (cpu_pct, mem) = node_res.and_then(Result::ok).unwrap_or((None, None));
+                            Some(RemoteHostSample { cpu_pct, mem })
+                        },
                         at: Instant::now(),
                     }
                 }
@@ -262,6 +300,9 @@ mod tests {
         assert!(super::is_local_uri("qemu:///system"));
         assert!(super::is_local_uri("qemu:///session"));
         assert!(!super::is_local_uri("qemu+ssh://root@host/system"));
+        assert!(!super::is_local_uri("qemu+tcp://host/system"));
+        assert!(!super::is_local_uri("qemu+tls://host/system"));
+        assert!(!super::is_local_uri("xen+ssh://host/system"));
     }
 
     #[test]
