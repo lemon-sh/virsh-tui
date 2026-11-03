@@ -5,8 +5,13 @@
 use super::*;
 
 /// Render the which-key popup bottom-right for a pending prefix.
-pub(super) fn render_which_key(f: &mut ratatui::Frame, theme: &Theme, prefix: &str) {
-    crate::ui::widgets::whichkey::render(f, theme, prefix);
+pub(super) fn render_which_key(
+    f: &mut ratatui::Frame,
+    theme: &Theme,
+    prefix: &str,
+    map: &std::collections::HashMap<Vec<String>, crate::input::engine::KeyAction>,
+) {
+    crate::ui::widgets::whichkey::render(f, theme, prefix, map);
 }
 
 pub(super) fn parse_size(size: &str) -> (u16, u16) {

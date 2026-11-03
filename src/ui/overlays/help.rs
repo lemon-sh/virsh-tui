@@ -23,17 +23,19 @@ pub struct Section {
     pub rows: Vec<(String, String, bool)>,
 }
 
-/// Display form of a bound sequence (`Space s c` → `␣sc`, `g g` → `gg`).
-fn seq_label(seq: &[String]) -> String {
-    seq.iter()
-        .map(|t| match t.as_str() {
+fn leader_title(map: &Keymap) -> String {
+    // Dynamic leader title e.g. "Leader  ␣" based on actual leader token bound to NewDomain
+    if let Some((seq, _)) = map.iter().find(|(_, a)| **a == A::NewDomain)
+        && seq.len() >= 2
+    {
+        let leader_sym = match seq[0].as_str() {
             "Space" => "␣",
             "Enter" => "⏎",
-            "Backspace" => "⌫",
-            "Esc" => "⎋",
             other => other,
-        })
-        .collect()
+        };
+        return format!("Leader  {leader_sym}");
+    }
+    String::from("Leader  ␣")
 }
 
 /// Keys bound to `actions` in the live map, `a / b` joined; `None` if the
@@ -42,18 +44,46 @@ fn live_label(map: &Keymap, actions: &[A]) -> Option<String> {
     if actions.is_empty() {
         return None;
     }
+    // Check if the actions represent the 5 view switching actions
+    if actions.len() == 5
+        && actions
+            == [
+                A::ViewDomains,
+                A::ViewHost,
+                A::ViewNetworks,
+                A::ViewStorage,
+                A::ViewEvents,
+            ]
+    {
+        let seqs: Vec<Option<String>> = actions
+            .iter()
+            .map(|a| crate::input::keymap::action_key_label(map, *a))
+            .collect();
+        if seqs
+            == [
+                Some("1".into()),
+                Some("2".into()),
+                Some("3".into()),
+                Some("4".into()),
+                Some("5".into()),
+            ]
+        {
+            return Some("1 … 5".to_string());
+        }
+    }
+
     let parts: Vec<String> = actions
         .iter()
         .map(|a| {
-            let mut seqs: Vec<String> = map
-                .iter()
-                .filter(|(_, v)| *v == a)
-                .map(|(k, _)| seq_label(k))
-                .collect();
-            seqs.sort_by_key(|s| (s.chars().count(), s.clone()));
-            seqs.first().cloned().unwrap_or_else(|| String::from("—"))
+            let labels = crate::input::keymap::action_key_labels(map, *a);
+            if actions.len() == 1 && labels.len() > 1 {
+                labels.join(" / ")
+            } else {
+                labels.into_iter().next().unwrap_or_else(|| String::from("—"))
+            }
         })
         .collect();
+
     // `␣sc / ␣sr / ␣sd` → `␣s c/r/d` when only the last key differs.
     if parts.len() > 2 {
         let prefix: String = parts[0]
@@ -106,9 +136,20 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
                 ("C-d / C-u", "half page", false, &[A::HalfDown, A::HalfUp]),
                 ("h / l", "focus pane ← →", false, &[]),
                 ("H / L", "prev / next tab", false, &[A::PrevTab, A::NextTab]),
-                ("1 … 5", "switch view", false, &[]),
+                (
+                    "1 … 5",
+                    "switch view",
+                    false,
+                    &[
+                        A::ViewDomains,
+                        A::ViewHost,
+                        A::ViewNetworks,
+                        A::ViewStorage,
+                        A::ViewEvents,
+                    ],
+                ),
                 ("⏎", "open", false, &[A::Open]),
-                ("⌫ / q", "back", false, &[]),
+                ("⌫ / q", "back", false, &[A::Back]),
                 ("/", "filter", false, &[A::Filter]),
                 ("n / N", "next / prev match", false, &[A::NextMatch, A::PrevMatch]),
             ],
@@ -159,7 +200,7 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
         ),
         sec(
             map,
-            "Leader  ␣",
+            &leader_title(map),
             "orange",
             &[
                 ("␣n", "new domain", false, &[A::NewDomain]),
@@ -327,4 +368,36 @@ pub fn render(frame: &mut Frame, theme: &Theme, filter: &str, map: &Keymap) {
     )]);
     let footer_area = Rect::new(inner.x, inner.y + inner.height - 1, inner.width, 1);
     frame.render_widget(Paragraph::new(footer).style(theme.base()), footer_area);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sections_reflect_default_keymap() {
+        let map = crate::input::keymap::default_map();
+        let secs = sections(&map);
+        let nav = secs.iter().find(|s| s.title == "Navigation").unwrap();
+        assert!(nav.rows.iter().any(|(k, d, _)| k == "⌫ / q" && d == "back"));
+        assert!(
+            nav.rows
+                .iter()
+                .any(|(k, d, _)| k == "1 … 5" && d == "switch view")
+        );
+
+        let leader = secs.iter().find(|s| s.title == "Leader  ␣").unwrap();
+        assert!(leader.rows.iter().any(|(k, d, _)| k == "␣n" && d == "new domain"));
+    }
+
+    #[test]
+    fn sections_reflect_key_changes() {
+        let mut map = crate::input::keymap::default_map();
+        map.retain(|_, a| *a != A::NewDomain);
+        map.insert(vec!["Space".into(), "v".into()], A::NewDomain);
+        let secs = sections(&map);
+        let leader = secs.iter().find(|s| s.title == "Leader  ␣").unwrap();
+        assert!(leader.rows.iter().any(|(k, d, _)| k == "␣v" && d == "new domain"));
+        assert!(!leader.rows.iter().any(|(k, _d, _)| k == "␣n"));
+    }
 }

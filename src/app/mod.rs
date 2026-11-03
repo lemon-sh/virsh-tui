@@ -592,7 +592,7 @@ impl App {
                 }
             }
             if let Some(prefix) = self.engine.pending_prefix() {
-                render_which_key(f, &self.theme, &prefix);
+                render_which_key(f, &self.theme, &prefix, self.engine.map());
             }
             if let Some(wz) = &self.wizard {
                 crate::ui::overlays::wizard::render(f, &self.theme, wz);

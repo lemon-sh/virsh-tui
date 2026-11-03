@@ -4,6 +4,148 @@ use std::collections::HashMap;
 
 use super::engine::KeyAction;
 
+/// Single source of truth for all default key bindings.
+pub const DEFAULT_BINDINGS: &[(&[&str], KeyAction)] = &[
+    // Navigation.
+    (&["j"], KeyAction::MoveDown),
+    (&["k"], KeyAction::MoveUp),
+    (&["g", "g"], KeyAction::GoTop),
+    (&["G"], KeyAction::GoBottom),
+    (&["C-d"], KeyAction::HalfDown),
+    (&["C-u"], KeyAction::HalfUp),
+    (&["Enter"], KeyAction::Open),
+    (&["Backspace"], KeyAction::Back),
+    (&["q"], KeyAction::Back),
+    (&["/"], KeyAction::Filter),
+    (&["n"], KeyAction::NextMatch),
+    (&["N"], KeyAction::PrevMatch),
+    // Domain lifecycle.
+    (&["s"], KeyAction::Start),
+    (&["S"], KeyAction::Shutdown),
+    (&["D"], KeyAction::Destroy),
+    (&["r"], KeyAction::Reboot),
+    (&["R"], KeyAction::Reset),
+    (&["p"], KeyAction::Pause),
+    (&["Z"], KeyAction::ManagedSave),
+    (&["a"], KeyAction::Autostart),
+    (&["c"], KeyAction::Console),
+    (&["v"], KeyAction::Viewer),
+    (&["e"], KeyAction::EditXml),
+    (&["X"], KeyAction::Undefine),
+    // Yank.
+    (&["y", "y"], KeyAction::YankName),
+    (&["y", "u"], KeyAction::YankUuid),
+    (&["y", "i"], KeyAction::YankIp),
+    (&["y", "c"], KeyAction::YankCmd),
+    // Leader.
+    (&["Space", "n"], KeyAction::NewDomain),
+    (&["Space", "c"], KeyAction::Clone),
+    (&["Space", "r"], KeyAction::Rename),
+    (&["Space", "M"], KeyAction::Migrate),
+    (&["Space", "s", "c"], KeyAction::SnapshotNew),
+    (&["Space", "s", "r"], KeyAction::SnapshotRevert),
+    (&["Space", "s", "d"], KeyAction::SnapshotDelete),
+    (&["Space", "m", "i"], KeyAction::InsertMedia),
+    (&["Space", "m", "e"], KeyAction::EjectMedia),
+    (&["Space", "d", "a"], KeyAction::DiskAttach),
+    (&["Space", "d", "r"], KeyAction::DiskResize),
+    (&["Space", "i", "a"], KeyAction::NicAttach),
+    (&["Space", "i", "l"], KeyAction::NicLink),
+    (&["Space", "b"], KeyAction::BootOrder),
+    (&["Space", "x"], KeyAction::ExportXml),
+    (&["Space", "l"], KeyAction::LeasePin),
+    (&["Space", "L"], KeyAction::LeaseUnpin),
+    // Monitor / views.
+    (&["t"], KeyAction::WindowCycle),
+    (&["o"], KeyAction::SortCycle),
+    (&["f"], KeyAction::ChipCycle),
+    (&["F"], KeyAction::ChipCycleBack),
+    (&["m"], KeyAction::Mark),
+    (&["V"], KeyAction::Visual),
+    (&["l"], KeyAction::LeaseFocus),
+    (&["H"], KeyAction::PrevTab),
+    (&["L"], KeyAction::NextTab),
+    (&["["], KeyAction::PrevTab),
+    (&["]"], KeyAction::NextTab),
+    (&["u"], KeyAction::UndoField),
+    (&["g", "x"], KeyAction::GotoXml),
+    // View tabs: instant 1-5 view switches.
+    (&["1"], KeyAction::ViewDomains),
+    (&["2"], KeyAction::ViewHost),
+    (&["3"], KeyAction::ViewNetworks),
+    (&["4"], KeyAction::ViewStorage),
+    (&["5"], KeyAction::ViewEvents),
+    // Modes.
+    (&[":"], KeyAction::Ex),
+    (&["C-p"], KeyAction::Palette),
+    (&["?"], KeyAction::Help),
+    (&[","], KeyAction::Settings),
+    (&["C-r"], KeyAction::Refresh),
+    (&["C-l"], KeyAction::Redraw),
+];
+
+/// Multi-key prefix groups with their human-readable labels.
+pub const PREFIX_GROUPS: &[(&[&str], &str)] = &[
+    (&["Space", "s"], "snapshot"),
+    (&["Space", "m"], "media"),
+    (&["Space", "d"], "disk"),
+    (&["Space", "i"], "NIC"),
+];
+
+/// Human-readable label for a multi-key group prefix.
+pub fn prefix_group_description(prefix: &[String]) -> &'static str {
+    for &(group, desc) in PREFIX_GROUPS {
+        if prefix.len() == group.len() && prefix.iter().zip(group.iter()).all(|(a, b)| a == *b) {
+            return desc;
+        }
+    }
+    match prefix.last().map(|s| s.as_str()) {
+        Some("s") => "snapshot",
+        Some("m") => "media",
+        Some("d") => "disk",
+        Some("i") => "NIC",
+        _ => "…",
+    }
+}
+
+/// Format key sequence tokens into display string (`["Space", "n"]` -> `"␣n"`).
+pub fn format_seq(seq: &[String]) -> String {
+    seq.iter()
+        .map(|t| match t.as_str() {
+            "Space" => "␣",
+            "Enter" => "⏎",
+            "Backspace" => "⌫",
+            "Esc" => "⎋",
+            other => other,
+        })
+        .collect()
+}
+
+/// Primary sequence display string for an action in a map (e.g. `␣n`).
+pub fn action_key_label(map: &HashMap<Vec<String>, KeyAction>, action: KeyAction) -> Option<String> {
+    let seqs = action_key_labels(map, action);
+    seqs.into_iter().next()
+}
+
+/// All sequence display strings for an action in a map (e.g. `["⌫", "q"]`).
+pub fn action_key_labels(map: &HashMap<Vec<String>, KeyAction>, action: KeyAction) -> Vec<String> {
+    let mut seqs: Vec<(usize, String)> = map
+        .iter()
+        .filter(|(_, a)| **a == action)
+        .map(|(k, _)| {
+            let pos = DEFAULT_BINDINGS
+                .iter()
+                .position(|(keys, a)| {
+                    *a == action && keys.len() == k.len() && keys.iter().zip(k.iter()).all(|(x, y)| x == y)
+                })
+                .unwrap_or(usize::MAX);
+            (pos, format_seq(k))
+        })
+        .collect();
+    seqs.sort_by_key(|(pos, s)| (*pos, s.chars().count(), s.clone()));
+    seqs.into_iter().map(|(_, s)| s).collect()
+}
+
 fn seq(keys: &[&str]) -> Vec<String> {
     keys.iter().map(|s| s.to_string()).collect()
 }
@@ -11,85 +153,9 @@ fn seq(keys: &[&str]) -> Vec<String> {
 /// Default bindings: sequence -> action.
 pub fn default_map() -> HashMap<Vec<String>, KeyAction> {
     let mut m: HashMap<Vec<String>, KeyAction> = HashMap::new();
-    let mut bind = |keys: &[&str], a: KeyAction| {
+    for &(keys, a) in DEFAULT_BINDINGS {
         m.insert(seq(keys), a);
-    };
-    // Navigation.
-    bind(&["j"], KeyAction::MoveDown);
-    bind(&["k"], KeyAction::MoveUp);
-    bind(&["g", "g"], KeyAction::GoTop);
-    bind(&["G"], KeyAction::GoBottom);
-    bind(&["C-d"], KeyAction::HalfDown);
-    bind(&["C-u"], KeyAction::HalfUp);
-    bind(&["Enter"], KeyAction::Open);
-    bind(&["Backspace"], KeyAction::Back);
-    bind(&["q"], KeyAction::Back);
-    bind(&["/"], KeyAction::Filter);
-    bind(&["n"], KeyAction::NextMatch);
-    bind(&["N"], KeyAction::PrevMatch);
-    // Domain lifecycle.
-    bind(&["s"], KeyAction::Start);
-    bind(&["S"], KeyAction::Shutdown);
-    bind(&["D"], KeyAction::Destroy);
-    bind(&["r"], KeyAction::Reboot);
-    bind(&["R"], KeyAction::Reset);
-    bind(&["p"], KeyAction::Pause);
-    bind(&["Z"], KeyAction::ManagedSave);
-    bind(&["a"], KeyAction::Autostart);
-    bind(&["c"], KeyAction::Console);
-    bind(&["v"], KeyAction::Viewer);
-    bind(&["e"], KeyAction::EditXml);
-    bind(&["X"], KeyAction::Undefine);
-    // Yank.
-    bind(&["y", "y"], KeyAction::YankName);
-    bind(&["y", "u"], KeyAction::YankUuid);
-    bind(&["y", "i"], KeyAction::YankIp);
-    bind(&["y", "c"], KeyAction::YankCmd);
-    // Leader.
-    bind(&["Space", "n"], KeyAction::NewDomain);
-    bind(&["Space", "c"], KeyAction::Clone);
-    bind(&["Space", "r"], KeyAction::Rename);
-    bind(&["Space", "M"], KeyAction::Migrate);
-    bind(&["Space", "s", "c"], KeyAction::SnapshotNew);
-    bind(&["Space", "s", "r"], KeyAction::SnapshotRevert);
-    bind(&["Space", "s", "d"], KeyAction::SnapshotDelete);
-    bind(&["Space", "m", "i"], KeyAction::InsertMedia);
-    bind(&["Space", "m", "e"], KeyAction::EjectMedia);
-    bind(&["Space", "d", "a"], KeyAction::DiskAttach);
-    bind(&["Space", "d", "r"], KeyAction::DiskResize);
-    bind(&["Space", "i", "a"], KeyAction::NicAttach);
-    bind(&["Space", "i", "l"], KeyAction::NicLink);
-    bind(&["Space", "x"], KeyAction::ExportXml);
-    bind(&["Space", "b"], KeyAction::BootOrder);
-    // Monitor / views.
-    bind(&["t"], KeyAction::WindowCycle);
-    bind(&["o"], KeyAction::SortCycle);
-    bind(&["f"], KeyAction::ChipCycle);
-    bind(&["F"], KeyAction::ChipCycleBack);
-    bind(&["m"], KeyAction::Mark);
-    bind(&["V"], KeyAction::Visual);
-    bind(&["l"], KeyAction::LeaseFocus);
-    bind(&["Space", "l"], KeyAction::LeasePin);
-    bind(&["Space", "L"], KeyAction::LeaseUnpin);
-    bind(&["H"], KeyAction::PrevTab);
-    bind(&["L"], KeyAction::NextTab);
-    bind(&["["], KeyAction::PrevTab);
-    bind(&["]"], KeyAction::NextTab);
-    bind(&["u"], KeyAction::UndoField);
-    bind(&["g", "x"], KeyAction::GotoXml);
-    // View tabs: instant 1-5 view switches.
-    bind(&["1"], KeyAction::ViewDomains);
-    bind(&["2"], KeyAction::ViewHost);
-    bind(&["3"], KeyAction::ViewNetworks);
-    bind(&["4"], KeyAction::ViewStorage);
-    bind(&["5"], KeyAction::ViewEvents);
-    // Modes.
-    bind(&[":"], KeyAction::Ex);
-    bind(&["C-p"], KeyAction::Palette);
-    bind(&["?"], KeyAction::Help);
-    bind(&[","], KeyAction::Settings);
-    bind(&["C-r"], KeyAction::Refresh);
-    bind(&["C-l"], KeyAction::Redraw);
+    }
     // Confirm modal keys (y/n) are handled by the modal itself, not the global map,
     // so that yank sequences (yy/yu/yi/yc) keep working.
     // Quit keys (q/ZZ/C-c) are handled at the app level for the same reason:
@@ -177,5 +243,23 @@ mod tests {
         assert!(!map.contains_key(&vec![String::from("S")]), "default S removed");
         assert_eq!(warnings.len(), 1);
         assert_eq!(KeyAction::from_name("snapshot_new"), Some(KeyAction::SnapshotNew));
+    }
+
+    #[test]
+    fn single_source_of_truth_binds_all_default_actions() {
+        let map = default_map();
+        assert_eq!(map.len(), DEFAULT_BINDINGS.len());
+        assert_eq!(
+            map.get(&vec![String::from("Space"), String::from("n")]),
+            Some(&KeyAction::NewDomain)
+        );
+        assert_eq!(
+            action_key_label(&map, KeyAction::NewDomain),
+            Some(String::from("␣n"))
+        );
+        assert_eq!(
+            action_key_labels(&map, KeyAction::Back),
+            vec![String::from("⌫"), String::from("q")]
+        );
     }
 }

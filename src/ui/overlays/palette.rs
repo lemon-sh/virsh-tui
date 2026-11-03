@@ -62,29 +62,79 @@ pub struct PaletteItem {
     pub virsh_cmd: String,
 }
 
-/// Curated app actions.
-pub fn curated() -> Vec<PaletteItem> {
+/// Curated app actions with keys resolved from the provided keymap.
+pub fn curated_with_map(
+    map: &std::collections::HashMap<Vec<String>, crate::input::engine::KeyAction>,
+) -> Vec<PaletteItem> {
+    use crate::input::engine::KeyAction as A;
+    use crate::input::keymap::action_key_label;
+
+    let resolve = |action: A, fallback: &'static str| {
+        action_key_label(map, action).unwrap_or_else(|| fallback.to_string())
+    };
+
     [
-        ("◆", "Snapshot", "snapshot: create…", "␣sc", "snapshot-create-as"),
-        ("◆", "Snapshot", "snapshot: revert…", "␣sr", "snapshot-revert"),
-        ("◆", "Snapshot", "snapshot: delete…", "␣sd", "snapshot-delete"),
-        ("◆", "Snapshot", "snapshot: tree view", "gs", "snapshot-list"),
-        ("●", "Domain", "start", "s", "start"),
-        ("●", "Domain", "shutdown", "S", "shutdown"),
-        ("◎", "Media", "attach ISO", "␣mi", "change-media"),
-        ("◫", "Storage", "volume: create", "n", "vol-create-as"),
-        ("▣", "CPU", "set vcpus", "", "setvcpus"),
-        ("▤", "Memory", "set live", "", "setmem"),
+        (
+            "◆",
+            "Snapshot",
+            "snapshot: create…",
+            resolve(A::SnapshotNew, "␣sc"),
+            "snapshot-create-as",
+        ),
+        (
+            "◆",
+            "Snapshot",
+            "snapshot: revert…",
+            resolve(A::SnapshotRevert, "␣sr"),
+            "snapshot-revert",
+        ),
+        (
+            "◆",
+            "Snapshot",
+            "snapshot: delete…",
+            resolve(A::SnapshotDelete, "␣sd"),
+            "snapshot-delete",
+        ),
+        (
+            "◆",
+            "Snapshot",
+            "snapshot: tree view",
+            String::from("gs"),
+            "snapshot-list",
+        ),
+        ("●", "Domain", "start", resolve(A::Start, "s"), "start"),
+        ("●", "Domain", "shutdown", resolve(A::Shutdown, "S"), "shutdown"),
+        (
+            "◎",
+            "Media",
+            "attach ISO",
+            resolve(A::InsertMedia, "␣mi"),
+            "change-media",
+        ),
+        (
+            "◫",
+            "Storage",
+            "volume: create",
+            String::from("n"),
+            "vol-create-as",
+        ),
+        ("▣", "CPU", "set vcpus", String::new(), "setvcpus"),
+        ("▤", "Memory", "set live", String::new(), "setmem"),
     ]
     .into_iter()
     .map(|(icon, category, title, key, virsh_cmd)| PaletteItem {
         icon,
         category: category.to_string(),
         title: title.to_string(),
-        key: key.to_string(),
+        key,
         virsh_cmd: virsh_cmd.to_string(),
     })
     .collect()
+}
+
+/// Curated app actions.
+pub fn curated() -> Vec<PaletteItem> {
+    curated_with_map(&crate::input::keymap::default_map())
 }
 
 /// Palette state.

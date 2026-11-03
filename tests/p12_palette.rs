@@ -42,6 +42,63 @@ fn keymap_sections_cover_defaults() {
 }
 
 #[test]
+fn single_source_of_truth_keymap_rebind_reflected_everywhere() {
+    use virsh_tui::input::engine::{KeyAction, KeyEngine};
+    use virsh_tui::input::key::KeySeq;
+    use virsh_tui::ui::overlays::help::sections;
+    use virsh_tui::ui::overlays::palette::curated_with_map;
+    use virsh_tui::ui::widgets::whichkey::entries_for_map;
+
+    let mut map = virsh_tui::input::keymap::default_map();
+
+    // Rebind NewDomain from Space n to Space a
+    map.retain(|_, a| *a != KeyAction::NewDomain);
+    map.insert(
+        vec![String::from("Space"), String::from("a")],
+        KeyAction::NewDomain,
+    );
+
+    // 1. Behavior in KeyEngine
+    let mut engine = KeyEngine::with_map(map.clone());
+    assert!(engine.feed(&KeySeq::parse("Space")).is_empty());
+    let resolved = engine.feed(&KeySeq::parse("a"));
+    assert_eq!(resolved.len(), 1);
+    assert_eq!(resolved[0].action, KeyAction::NewDomain);
+
+    // 2. Leader key pop-up (WhichKey)
+    let wk_entries = entries_for_map(&map, "Space");
+    assert!(wk_entries.iter().any(|(k, d)| k == "a" && d == "new domain"));
+    assert!(!wk_entries.iter().any(|(k, _)| k == "n"));
+
+    // 3. Help overlay
+    let secs = sections(&map);
+    let leader_sec = secs.iter().find(|s| s.title.starts_with("Leader")).unwrap();
+    assert!(
+        leader_sec
+            .rows
+            .iter()
+            .any(|(k, d, _)| k == "␣a" && d == "new domain")
+    );
+    assert!(!leader_sec.rows.iter().any(|(k, _, _)| k == "␣n"));
+
+    // Rebind Shutdown from S to Space q
+    map.retain(|_, a| *a != KeyAction::Shutdown);
+    map.insert(
+        vec![String::from("Space"), String::from("q")],
+        KeyAction::Shutdown,
+    );
+
+    // 4. WhichKey shows shutdown under Space
+    let wk_entries = entries_for_map(&map, "Space");
+    assert!(wk_entries.iter().any(|(k, d)| k == "q" && d == "shutdown"));
+
+    // 5. Command palette shows ␣q for shutdown
+    let pal_items = curated_with_map(&map);
+    let shutdown_item = pal_items.iter().find(|i| i.title == "shutdown").unwrap();
+    assert_eq!(shutdown_item.key, "␣q");
+}
+
+#[test]
 fn events_filter() {
     use virsh_tui::ui::views::events::{EventFilter, EventsState};
     let mut st = EventsState::demo();
