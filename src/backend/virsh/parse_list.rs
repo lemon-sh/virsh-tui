@@ -1,8 +1,8 @@
 //! Table parsers: virsh list, net-list, pool-list, snapshot-list.
 
-use color_eyre::{Result, eyre::eyre};
-
 use crate::model::{DomainState, NetworkSummary, PoolSummary, Snapshot};
+use color_eyre::Result;
+use color_eyre::eyre::eyre;
 
 /// Row of `virsh list --all`.
 #[derive(Debug, Clone, PartialEq, Eq)]

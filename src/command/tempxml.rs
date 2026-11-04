@@ -5,9 +5,8 @@
 //! so other local users cannot pre-create or swap them (symlink/TOCTOU attacks),
 //! and the file is removed when the returned handle is dropped.
 
-use std::io::Write;
-
 use color_eyre::Result;
+use std::io::Write;
 use tempfile::NamedTempFile;
 
 /// Write `xml` to a new private temp file. Keep the handle alive while the

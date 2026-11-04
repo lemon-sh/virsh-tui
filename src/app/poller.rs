@@ -4,13 +4,12 @@
 //! handling never wait on a subprocess. Results arrive as `LiveMsg`s and are
 //! applied to the state in one cheap, synchronous step.
 
+use crate::backend::virsh::VirshBackend;
+use crate::backend::{Backend, RawDomainStats};
+use crate::model::{DomainConfig, DomainSummary, PoolSummary};
 use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant};
-
 use tokio::sync::mpsc;
-
-use crate::backend::{Backend, RawDomainStats, virsh::VirshBackend};
-use crate::model::{DomainConfig, DomainSummary, PoolSummary};
 
 /// Telemetry from a remote hypervisor host.
 #[derive(Debug, Clone, PartialEq)]

@@ -6,14 +6,11 @@ pub mod overlays;
 pub mod views;
 pub mod widgets;
 
-use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Layout},
-    style::{Modifier, Style},
-    text::{Line, Span},
-};
-
 use crate::theme::Theme;
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout};
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
 
 /// Minimal P0 app state: chrome only.
 #[derive(Debug, Clone)]

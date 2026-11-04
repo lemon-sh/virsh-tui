@@ -1,18 +1,13 @@
 //! Networks view (screen 07, PLAN.md section 9.10, P9).
 
-use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::{Block, Paragraph},
-};
-
 use crate::theme::Theme;
-use crate::ui::widgets::{
-    charts::{self, BrailleMode},
-    form::{Field, FieldKind, Form},
-};
+use crate::ui::widgets::charts::{self, BrailleMode};
+use crate::ui::widgets::form::{Field, FieldKind, Form};
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Paragraph};
 
 /// Virtual network row.
 #[derive(Debug, Clone)]

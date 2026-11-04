@@ -1,9 +1,9 @@
 //! Plan execution: sequential steps, dry-run, timeouts, message formatting.
 
-use color_eyre::{Result, eyre::eyre};
-
 use super::display::display;
 use super::plan::CommandPlan;
+use color_eyre::Result;
+use color_eyre::eyre::eyre;
 
 static DEMO: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 

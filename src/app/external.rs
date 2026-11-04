@@ -1,7 +1,6 @@
 //! External programs that take over the terminal ($EDITOR, console) or run detached.
 
 use std::io::Write;
-
 use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Set while an external program owns the terminal: the input thread stops

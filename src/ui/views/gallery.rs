@@ -1,15 +1,11 @@
 //! Gallery screen (P1): shows every widget with demo data.
 use crate::theme::Theme;
-use crate::ui::widgets::{
-    charts::{self, BrailleMode},
-    gauge, hbar,
-};
-use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Layout},
-    text::Line,
-    widgets::Paragraph,
-};
+use crate::ui::widgets::charts::{self, BrailleMode};
+use crate::ui::widgets::{gauge, hbar};
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout};
+use ratatui::text::Line;
+use ratatui::widgets::Paragraph;
 
 /// Render the gallery demo.
 pub fn render(frame: &mut Frame, theme: &Theme) {

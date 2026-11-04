@@ -3,10 +3,9 @@
 pub mod fixtures;
 pub mod sim;
 
-use color_eyre::Result;
-
 use super::{Backend, RawDomainStats};
 use crate::model::{DhcpLease, DomainSummary, HostInfo, NetworkSummary, PoolSummary, Snapshot};
+use color_eyre::Result;
 
 /// Fully in-memory backend reproducing the mockup data exactly.
 pub struct DemoBackend;

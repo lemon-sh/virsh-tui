@@ -35,11 +35,9 @@ pub fn centered(area: ratatui::layout::Rect, w: u16, h: u16) -> ratatui::layout:
 
 /// Too-small terminal panel.
 pub fn render_too_small(frame: &mut ratatui::Frame, theme: &crate::theme::Theme) {
-    use ratatui::{
-        style::{Modifier, Style},
-        text::{Line, Span},
-        widgets::{Block, Borders, Paragraph},
-    };
+    use ratatui::style::{Modifier, Style};
+    use ratatui::text::{Line, Span};
+    use ratatui::widgets::{Block, Borders, Paragraph};
     let area = frame.area();
     frame.render_widget(ratatui::widgets::Block::default().style(theme.base()), area);
     let w = area.width;

@@ -3,19 +3,15 @@
 pub mod hardware;
 pub mod snapshots;
 
-use std::collections::HashSet;
-
-use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::{Block, Paragraph},
-};
-
 use crate::model::{DomainConfig, DomainState};
 use crate::theme::Theme;
 use crate::ui::widgets::charts::{self, BrailleMode};
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Paragraph};
+use std::collections::HashSet;
 
 /// Inner tabs in order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

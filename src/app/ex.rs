@@ -19,10 +19,11 @@ pub(super) async fn run_ex_line(
     theme: &mut Theme,
     confirm: &mut Option<crate::command::plan::PendingConfirm>,
 ) -> bool {
-    use crate::command::builders::hardware as hardware_ext;
-    use crate::command::builders::lifecycle;
+    use crate::command::builders::{hardware as hardware_ext, lifecycle};
     match crate::input::ex::parse(line) {
-        Ok(crate::input::ex::ExCommand::Quit | crate::input::ex::ExCommand::QuitAll) => return true,
+        Ok(crate::input::ex::ExCommand::Quit | crate::input::ex::ExCommand::QuitAll) => {
+            return true;
+        }
         Ok(crate::input::ex::ExCommand::Help(topic)) => {
             *help_state = Some(crate::ui::overlays::help::HelpState::new(&topic));
         }
@@ -246,7 +247,9 @@ pub(super) async fn run_ex_line(
                             crate::model::sanitize(first.trim()),
                             lines.len() - 1
                         ),
-                        Some(first) => format!("✓ {}  ── {shown}", crate::model::sanitize(first.trim())),
+                        Some(first) => {
+                            format!("✓ {}  ── {shown}", crate::model::sanitize(first.trim()))
+                        }
                         None => format!("✓ done  ── {shown}"),
                     };
                     refresh_live(uri, dash).await;

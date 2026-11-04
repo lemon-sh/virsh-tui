@@ -4,15 +4,12 @@
 //! message colouring are identical everywhere. In live mode the hostname and
 //! clock are real; demo/tests keep the mockup values (`forge`, frozen time).
 
-use ratatui::{
-    Frame,
-    layout::Rect,
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::Paragraph,
-};
-
 use crate::theme::Theme;
+use ratatui::Frame;
+use ratatui::layout::Rect;
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::Paragraph;
 
 /// Live chrome facts (set once at startup in live mode).
 #[derive(Debug, Clone)]

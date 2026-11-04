@@ -191,7 +191,9 @@ impl Config {
     }
 
     fn load_from(path: Option<std::path::PathBuf>) -> Self {
-        let Some(path) = path else { return Self::default() };
+        let Some(path) = path else {
+            return Self::default();
+        };
         let mut cfg: Self = match std::fs::read_to_string(&path) {
             Err(_) => Self::default(),
             Ok(text) => match toml::from_str(&text) {

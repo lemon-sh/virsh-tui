@@ -1,8 +1,7 @@
 //! Modes: NORMAL / INSERT / VISUAL / COMMAND / PALETTE / PICKER / CONFIRM.
 
-use ratatui::style::{Color, Style};
-
 use crate::theme::Theme;
+use ratatui::style::{Color, Style};
 
 /// App mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

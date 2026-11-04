@@ -3,11 +3,10 @@
 //! Style: `$ ` comment · program green · subcommand blue · object fg ·
 //! flags cyan · numerics orange · paths yellow.
 
-use ratatui::{style::Style, text::Span};
-
-use crate::theme::Theme;
-
 use super::plan::CommandStep;
+use crate::theme::Theme;
+use ratatui::style::Style;
+use ratatui::text::Span;
 
 /// Plain-text display with shell quoting for copy-to-clipboard.
 pub fn display(step: &CommandStep) -> String {

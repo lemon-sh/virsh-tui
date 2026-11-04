@@ -1,15 +1,12 @@
 //! Snapshots tab (PLAN.md section 9.9, P8): tree, details, create/revert/delete.
 
-use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::{Block, Borders, Clear, Paragraph},
-};
-
 use crate::model::Snapshot;
 use crate::theme::Theme;
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 
 /// One tree row.
 #[derive(Debug, Clone)]

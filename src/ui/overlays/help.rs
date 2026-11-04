@@ -1,16 +1,12 @@
 //! Keybindings overlay (PLAN.md section 9.8, P12): generated from the live keymap.
 
-use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::{Block, Borders, Clear, Paragraph},
-};
-
-use crate::theme::Theme;
-
 use crate::input::engine::KeyAction as A;
+use crate::theme::Theme;
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 
 /// Live keymap: key sequence -> action.
 pub type Keymap = std::collections::HashMap<Vec<String>, A>;

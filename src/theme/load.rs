@@ -1,8 +1,8 @@
 //! Custom theme loading from ~/.config/virsh-tui/themes/<name>.toml.
 
-use color_eyre::{Result, eyre::eyre};
-
 use super::{IconSet, Theme, ThemeTokens, rgb};
+use color_eyre::Result;
+use color_eyre::eyre::eyre;
 
 const KEYS: [&str; 16] = [
     "bg", "bg2", "hl", "sel", "gutter", "comment", "fg", "fg2", "blue", "cyan", "magenta", "green", "yellow",

@@ -3,18 +3,14 @@
 //! Three columns: Devices (38) | editor (min) | right stack (60).
 //! Changes accumulate per domain until `:w`.
 
-use std::collections::{HashMap, HashSet};
-
-use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::{Block, Paragraph},
-};
-
 use crate::theme::Theme;
 use crate::ui::widgets::form::{Field, FieldKind, Form};
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Paragraph};
+use std::collections::{HashMap, HashSet};
 
 /// Device entry.
 #[derive(Debug, Clone)]

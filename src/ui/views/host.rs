@@ -1,16 +1,13 @@
 //! Host monitor (screen 02, PLAN.md section 9.4).
 
-use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::{Block, Paragraph},
-};
-
 use crate::app::poller::is_local_uri;
 use crate::theme::Theme;
 use crate::ui::widgets::charts::{self, BrailleMode};
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Paragraph};
 
 /// One running-domain row.
 #[derive(Debug, Clone)]
@@ -148,7 +145,8 @@ impl HostState {
 
     /// Live state for a remote hypervisor host (queries virsh, no local /proc access).
     pub async fn live_remote(uri: &str) -> Self {
-        use crate::backend::{Backend, virsh::VirshBackend};
+        use crate::backend::Backend;
+        use crate::backend::virsh::VirshBackend;
         let backend = VirshBackend::new(uri);
         let info = backend.host_info().await.unwrap_or_default();
         let (_cpu_pct, node_mem) = backend.node_stats().await.unwrap_or((None, None));

@@ -1,6 +1,7 @@
 //! Typed XML edit operations on xmltree (define path).
 
-use color_eyre::{Result, eyre::eyre};
+use color_eyre::Result;
+use color_eyre::eyre::eyre;
 use xmltree::{Element, XMLNode};
 
 fn parse(xml: &str) -> Result<Element> {

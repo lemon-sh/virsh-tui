@@ -4,13 +4,10 @@
 //! optional right title top-right, and optional footers on the bottom border.
 //! Every view builds its panels through `block` so the chrome stays identical.
 
-use ratatui::{
-    layout::Rect,
-    text::{Line, Span},
-    widgets::{Block, Borders, Padding, Paragraph},
-};
-
 use crate::theme::Theme;
+use ratatui::layout::Rect;
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Borders, Padding, Paragraph};
 
 /// Build a panel block.
 pub fn block(

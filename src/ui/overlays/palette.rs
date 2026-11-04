@@ -1,15 +1,12 @@
 //! Command palette (PLAN.md section 9.7, P12): fuzzy actions + virsh reference.
 
-use nucleo_matcher::{Config, Matcher, Utf32Str};
-use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::{Clear, Paragraph},
-};
-
 use crate::theme::Theme;
+use nucleo_matcher::{Config, Matcher, Utf32Str};
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Clear, Paragraph};
 
 /// Fuzzy-rank items by query (best first). Empty query keeps order.
 pub fn fuzzy_rank(query: &str, items: &[&str]) -> Vec<String> {

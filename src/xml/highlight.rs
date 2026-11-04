@@ -1,8 +1,8 @@
 //! XML syntax highlighting for the XML tab.
 
-use ratatui::{style::Style, text::Line, text::Span};
-
 use crate::theme::Theme;
+use ratatui::style::Style;
+use ratatui::text::{Line, Span};
 
 /// Highlight one XML line: tags blue, values yellow, comments dim.
 pub fn highlight_line(theme: &Theme, line: &str) -> Line<'static> {

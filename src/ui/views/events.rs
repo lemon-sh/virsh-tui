@@ -1,15 +1,12 @@
 //! Events view (tab 5, PLAN.md section 9.12, P12, not mocked).
 
-use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::Paragraph,
-};
-
 use crate::model::LibvirtEvent;
 use crate::theme::Theme;
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::Paragraph;
 
 /// Event filter chip.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

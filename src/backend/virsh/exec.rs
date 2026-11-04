@@ -1,8 +1,8 @@
 //! Process spawning: LC_ALL=C, explicit URI, timeouts, stderr capture.
 
+use color_eyre::Result;
+use color_eyre::eyre::eyre;
 use std::sync::atomic::{AtomicBool, Ordering};
-
-use color_eyre::{Result, eyre::eyre};
 use tokio::process::Command;
 
 static DETACH_TTY: AtomicBool = AtomicBool::new(false);

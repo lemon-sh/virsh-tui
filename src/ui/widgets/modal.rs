@@ -1,8 +1,8 @@
 //! Modal helpers (PLAN.md 7.13).
 
-use ratatui::{Frame, style::Modifier};
-
 use crate::theme::Theme;
+use ratatui::Frame;
+use ratatui::style::Modifier;
 
 /// Centered rect of at most `w`×`h` inside `area`.
 pub fn centered(area: ratatui::layout::Rect, w: u16, h: u16) -> ratatui::layout::Rect {

@@ -1,8 +1,7 @@
 //! Default keymap (DESIGN.md section 6) plus TOML overrides.
 
-use std::collections::HashMap;
-
 use super::engine::KeyAction;
+use std::collections::HashMap;
 
 /// Single source of truth for all default key bindings.
 pub const DEFAULT_BINDINGS: &[(&[&str], KeyAction)] = &[
@@ -197,7 +196,9 @@ pub fn apply_overrides(
     }
     for table in tables {
         for (name, keys) in table {
-            let Some(keys) = keys.as_array() else { continue };
+            let Some(keys) = keys.as_array() else {
+                continue;
+            };
             let Some(action) = KeyAction::from_name(name) else {
                 warnings.push(format!("keymap.toml: unknown action `{name}`"));
                 continue;

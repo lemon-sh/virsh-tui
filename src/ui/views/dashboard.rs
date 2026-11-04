@@ -2,20 +2,16 @@
 //!
 //! Layout at 174x43: top bar, body (left 101 cols + right), status bar, message line.
 
-use std::collections::HashSet;
-
-use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::{Block, Paragraph},
-};
-
 use crate::backend::demo::fixtures;
 use crate::model::DomainState;
 use crate::theme::Theme;
 use crate::ui::widgets::charts::{self, BrailleMode};
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Paragraph};
+use std::collections::HashSet;
 
 /// State filter chip.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -391,7 +387,9 @@ impl DashboardState {
 
     /// In VISUAL mode, the marks are exactly the rows between anchor and cursor.
     pub fn update_visual(&mut self) {
-        let Some(anchor) = self.visual_anchor else { return };
+        let Some(anchor) = self.visual_anchor else {
+            return;
+        };
         let (a, b) = (anchor.min(self.selection), anchor.max(self.selection));
         let names: Vec<String> = self
             .visible_rows()

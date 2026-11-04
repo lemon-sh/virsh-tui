@@ -1,8 +1,8 @@
 //! Domain XML parsing with roxmltree.
 
-use color_eyre::{Result, eyre::eyre};
-
 use crate::model::{DiskInfo, DomainConfig, GraphicsInfo, NicInfo};
+use color_eyre::Result;
+use color_eyre::eyre::eyre;
 
 fn child_text<'a, 'input>(node: roxmltree::Node<'a, 'input>, tag: &str) -> Option<String> {
     node.children()
@@ -268,7 +268,9 @@ pub fn parse_volume_xml(text: &str) -> Result<(String, u64, u64, Option<String>)
     let doc = roxmltree::Document::parse(text).map_err(|e| eyre!("bad xml: {e}"))?;
     let root = doc.root_element();
     let bytes = |tag: &str| -> u64 {
-        let Some(n) = find_child(root, tag) else { return 0 };
+        let Some(n) = find_child(root, tag) else {
+            return 0;
+        };
         let v: f64 = n.text().and_then(|t| t.trim().parse().ok()).unwrap_or(0.0);
         let mult: f64 = match n.attribute("unit").unwrap_or("bytes") {
             "KiB" | "K" | "k" => 1024.0,

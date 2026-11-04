@@ -506,7 +506,9 @@ pub(super) fn prefill_command(
             Some(d) => format!("vol-resize {} ", d.source),
             None => return None,
         },
-        A::NicAttach => format!("attach-interface {domain} network default --model virtio --config{live}"),
+        A::NicAttach => {
+            format!("attach-interface {domain} network default --model virtio --config{live}")
+        }
         A::NicLink => {
             let nic = cfg.and_then(|c| c.nics.first())?;
             let iface = if nic.target.is_empty() {
@@ -516,7 +518,9 @@ pub(super) fn prefill_command(
             };
             format!("domif-setlink {domain} {iface} down")
         }
-        A::Migrate => format!("migrate {domain} qemu+ssh://HOST/system --live --persistent --verbose"),
+        A::Migrate => {
+            format!("migrate {domain} qemu+ssh://HOST/system --live --persistent --verbose")
+        }
         _ => return None,
     })
 }

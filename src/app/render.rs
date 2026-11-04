@@ -194,7 +194,9 @@ pub(super) fn buffer_to_ansi(buffer: &ratatui::buffer::Buffer, w: u16, h: u16) -
     for y in 0..h {
         let mut last: Option<(Color, Color, Modifier)> = None;
         for x in 0..w {
-            let Some(cell) = buffer.cell((x, y)) else { continue };
+            let Some(cell) = buffer.cell((x, y)) else {
+                continue;
+            };
             let key = (cell.fg, cell.bg, cell.modifier);
             if last != Some(key) {
                 out.push_str("\x1b[0m");

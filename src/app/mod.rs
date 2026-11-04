@@ -16,28 +16,27 @@ mod settings;
 mod storage;
 mod wizard;
 
-use color_eyre::Result;
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
-use ratatui::Terminal;
-use ratatui::backend::CrosstermBackend;
-use std::time::Duration;
-use tokio::time::interval;
-
 use crate::cli::Cli;
 use crate::config::Config;
 use crate::theme::Theme;
 use crate::ui::{self, ChromeState};
+use color_eyre::Result;
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 use detail::*;
 use domains::*;
 use ex::*;
 use live::*;
 use networks::*;
 use palette::*;
+use ratatui::Terminal;
+use ratatui::backend::CrosstermBackend;
 use ratatui::layout::Rect;
 use ratatui::style::Style;
 use render::*;
 use settings::*;
+use std::time::Duration;
 use storage::*;
+use tokio::time::interval;
 use wizard::*;
 
 /// Build the working theme from config (builtin/custom + appearance flags).
@@ -98,7 +97,8 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
         ui::views::dashboard::DashboardState::demo()
     } else {
         // Live mode: read-only fetch at startup.
-        use crate::backend::{Backend, virsh::VirshBackend};
+        use crate::backend::Backend;
+        use crate::backend::virsh::VirshBackend;
         let backend = VirshBackend::new(&cli.connect);
         match backend.list_domains().await {
             Ok(summaries) => {
@@ -428,7 +428,9 @@ impl App {
 
     /// Tab (or Shift-Tab) on the `:` line: start or cycle completion.
     fn tab_complete(&mut self, back: bool) {
-        let Some(ex) = self.ex_line.as_mut() else { return };
+        let Some(ex) = self.ex_line.as_mut() else {
+            return;
+        };
         if let Some(c) = self.completion.as_mut() {
             let n = c.items.len();
             c.idx = if back {
@@ -459,7 +461,9 @@ impl App {
                 .clone()
         };
         let (start, items) = crate::input::complete::complete(&line, &ctx, &flags);
-        let Some(ex) = self.ex_line.as_mut() else { return };
+        let Some(ex) = self.ex_line.as_mut() else {
+            return;
+        };
         match items.len() {
             0 => self.dash.message = String::from("no completions"),
             1 => {

@@ -1,14 +1,11 @@
 //! CONFIRM modal (red border, CONFIRM mode).
 
-use ratatui::{
-    Frame,
-    layout::Rect,
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::{Block, Borders, Clear, Padding, Paragraph, Wrap},
-};
-
 use crate::theme::Theme;
+use ratatui::Frame;
+use ratatui::layout::Rect;
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Borders, Clear, Padding, Paragraph, Wrap};
 
 /// Pending confirmation.
 #[derive(Debug, Clone)]

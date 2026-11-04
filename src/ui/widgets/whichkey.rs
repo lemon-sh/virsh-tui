@@ -1,19 +1,15 @@
 //! whichkey widget (PLAN.md section 7).
 //! WhichKey popup (PLAN.md 7.16).
 
-use std::collections::HashMap;
-
-use ratatui::{
-    Frame,
-    layout::Rect,
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::{Block, BorderType, Borders, Clear, Paragraph},
-};
-use unicode_width::UnicodeWidthStr;
-
 use crate::input::engine::KeyAction;
 use crate::theme::Theme;
+use ratatui::Frame;
+use ratatui::layout::Rect;
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, BorderType, Borders, Clear, Paragraph};
+use std::collections::HashMap;
+use unicode_width::UnicodeWidthStr;
 
 pub const TRIGGER_DELAY_MS: u64 = 300;
 

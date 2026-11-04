@@ -1,13 +1,12 @@
 //! Live metrics store: turns periodic `virsh domstats --raw` and `/proc/stat`
 //! samples into per-domain and host histories.
 
-use std::collections::HashMap;
-use std::time::Instant;
-
 use super::ring::Ring;
 use super::sampler::{cpu_pct, mem_used_kib, rate};
 use crate::backend::RawDomainStats;
 use crate::backend::virsh::host_local::{CpuTimes, cpu_busy_fraction, parse_proc_stat};
+use std::collections::HashMap;
+use std::time::Instant;
 
 /// Default chart window: 60 samples (60 s at the default 1 s refresh).
 pub const HISTORY: usize = 60;

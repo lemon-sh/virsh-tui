@@ -4,15 +4,12 @@
 //! rendering, key handling, validation and the `virt-install` command, and the
 //! "Equivalent command" panel shows exactly the argv that will run.
 
-use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::{Clear, Paragraph},
-};
-
 use crate::theme::Theme;
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Clear, Paragraph};
 
 /// Wizard step index.
 pub const STEP_NAMES: [&str; 6] = [
@@ -578,7 +575,9 @@ impl WizardState {
                 true
             }
             WKind::Number { max, .. } => {
-                let Some(d) = c.to_digit(10) else { return false };
+                let Some(d) = c.to_digit(10) else {
+                    return false;
+                };
                 if let Some(n) = self.num_mut(f) {
                     *n = (n.saturating_mul(10) + d).min(max);
                 }

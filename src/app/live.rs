@@ -6,7 +6,8 @@ use super::*;
 
 /// Build live host state: local /proc data plus virsh pools/networks/domains.
 pub(super) async fn fill_live_host(uri: &str) -> ui::views::host::HostState {
-    use crate::backend::{Backend, virsh::VirshBackend};
+    use crate::backend::Backend;
+    use crate::backend::virsh::VirshBackend;
     let mut host = if is_local_uri(uri) {
         ui::views::host::HostState::live_local().await
     } else {
@@ -291,7 +292,8 @@ pub(super) fn spawn_load(uri: &str, view: View, tx: &tokio::sync::mpsc::Unbounde
 /// Build live networks state: definitions, host interfaces, and the
 /// selected network's leases/attachments.
 pub(super) async fn fill_live_nets(uri: &str) -> ui::views::networks::NetworksState {
-    use crate::backend::{Backend, virsh::VirshBackend};
+    use crate::backend::Backend;
+    use crate::backend::virsh::VirshBackend;
     use crate::ui::views::networks::{NetRow, NetworksState};
     let backend = VirshBackend::new(uri);
     let mut st = NetworksState::demo();
@@ -358,7 +360,8 @@ pub(super) async fn reload_nets(uri: &str, st: &mut ui::views::networks::Network
 /// Leases (with static hosts and owning domains) and attached interfaces of
 /// the selected network.
 pub(super) async fn load_net_selection(uri: &str, st: &mut ui::views::networks::NetworksState) {
-    use crate::backend::{Backend, virsh::VirshBackend};
+    use crate::backend::Backend;
+    use crate::backend::virsh::VirshBackend;
     use crate::ui::views::networks::LeaseRow;
     st.leases.clear();
     st.attached.clear();
@@ -552,7 +555,8 @@ pub(super) async fn read_ifaces() -> Vec<crate::ui::views::networks::IfaceRow> {
 /// Build live storage state: pools, every domain's disk sources, the volumes
 /// of the selected pool, and the ISO library across all active pools.
 pub(super) async fn fill_live_store(uri: &str) -> ui::views::storage::StorageState {
-    use crate::backend::{Backend, virsh::VirshBackend};
+    use crate::backend::Backend;
+    use crate::backend::virsh::VirshBackend;
     use crate::ui::views::storage::{IsoEntry, PoolRow, StorageState};
     let backend = VirshBackend::new(uri);
     let mut st = StorageState::demo();

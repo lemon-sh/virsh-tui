@@ -288,7 +288,8 @@ pub(super) async fn handle_snap_modal(
     history: &mut crate::command::history::History,
     messages: &mut Vec<String>,
 ) -> bool {
-    use crate::ui::views::detail::{SnapModal, snapshots::AfterRevert};
+    use crate::ui::views::detail::SnapModal;
+    use crate::ui::views::detail::snapshots::AfterRevert;
     let Some(d) = detail else { return false };
     match d.snap_modal {
         SnapModal::None => return false,
@@ -467,7 +468,8 @@ pub(super) async fn open_detail(
 
 /// Reload the snapshot tree (and the current snapshot) of the detail domain.
 pub(super) async fn refresh_snapshots(uri: &str, d: &mut ui::views::detail::DetailState) {
-    use crate::backend::{Backend, virsh::VirshBackend};
+    use crate::backend::Backend;
+    use crate::backend::virsh::VirshBackend;
     let Ok(snaps) = VirshBackend::new(uri).snapshots(&d.domain).await else {
         return;
     };
@@ -772,7 +774,9 @@ pub(super) async fn set_description(
     }
     let xml = match crate::backend::virsh::exec::run(uri, &["dumpxml", domain, "--inactive"]).await {
         Ok(x) => x,
-        Err(e) => return format!("✗ dumpxml failed: {}", e.to_string().lines().next().unwrap_or("")),
+        Err(e) => {
+            return format!("✗ dumpxml failed: {}", e.to_string().lines().next().unwrap_or(""));
+        }
     };
     let new_xml = set_description_text(&xml, text);
     let Ok(tmp) = crate::command::tempxml::write(domain, &new_xml) else {
@@ -819,7 +823,9 @@ pub(super) async fn attach_hostdev(uri: &str, domain: &str, node: &str, dry_run:
     }
     let dev_xml = match crate::backend::virsh::exec::run(uri, &["nodedev-dumpxml", node]).await {
         Ok(x) => x,
-        Err(e) => return format!("✗ nodedev failed: {}", e.to_string().lines().next().unwrap_or("")),
+        Err(e) => {
+            return format!("✗ nodedev failed: {}", e.to_string().lines().next().unwrap_or(""));
+        }
     };
     let hostdev = match hostdev_xml(&dev_xml) {
         Some(x) => x,

@@ -4,9 +4,8 @@
 //! `ResolvedAction`. A partial match waits (caller shows which-key after
 //! 300 ms). `Esc` clears the buffer.
 
-use std::collections::HashMap;
-
 use super::key::KeySeq;
+use std::collections::HashMap;
 
 /// Mutating marker: `.` repeats only these.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

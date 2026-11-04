@@ -1,15 +1,12 @@
 //! Storage view (screen 08, PLAN.md section 9.11, P10): pools, volumes, media picker.
 
-use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::{Block, Paragraph},
-};
-
 use crate::theme::Theme;
 use crate::ui::widgets::charts;
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Paragraph};
 
 /// Storage pool row (2 lines).
 #[derive(Debug, Clone)]

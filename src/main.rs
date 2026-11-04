@@ -3,7 +3,9 @@
 use clap::Parser;
 use color_eyre::Result;
 use tracing_subscriber::EnvFilter;
-use virsh_tui::{app, cli::Cli, config::Config};
+use virsh_tui::app;
+use virsh_tui::cli::Cli;
+use virsh_tui::config::Config;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
@@ -35,7 +37,8 @@ fn main() -> Result<()> {
 
 /// Read-only probe: print parsed domains, host info, networks, and pools as JSON.
 async fn probe(cli: &Cli) -> Result<()> {
-    use virsh_tui::backend::{Backend, virsh::VirshBackend};
+    use virsh_tui::backend::Backend;
+    use virsh_tui::backend::virsh::VirshBackend;
     let backend = VirshBackend::new(&cli.connect);
     let domains = backend.list_domains().await?;
     let host = backend.host_info().await.unwrap_or(virsh_tui::model::HostInfo {

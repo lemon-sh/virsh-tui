@@ -10,12 +10,10 @@ pub mod parse_list;
 pub mod parse_nodestats;
 pub mod parse_xml;
 
-pub use exec::{ensure_virsh_available, is_virsh_available};
-
-use color_eyre::Result;
-
 use super::{Backend, RawDomainStats};
 use crate::model::{DhcpLease, DomainSummary, HostInfo, NetworkSummary, PoolSummary, Snapshot};
+use color_eyre::Result;
+pub use exec::{ensure_virsh_available, is_virsh_available};
 
 /// Real backend: runs `virsh -c <uri> ...` with `LC_ALL=C`.
 pub struct VirshBackend {

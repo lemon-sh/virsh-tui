@@ -1,16 +1,13 @@
 //! Settings view (screen 10, PLAN.md section 9.13, P13, `,` replaces the body).
 
-use ratatui::{
-    Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::{Block, Paragraph},
-};
-
 use crate::config::Config;
 use crate::theme::{IconSet, Theme, builtin};
 use crate::ui::widgets::charts;
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Paragraph};
 
 /// Settings category.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

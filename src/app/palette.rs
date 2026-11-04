@@ -39,7 +39,9 @@ pub(super) async fn handle_palette_key(
     demo: bool,
     ex_line: &mut Option<crate::input::textinput::TextInput>,
 ) -> bool {
-    let Some(pal) = palette.as_mut() else { return false };
+    let Some(pal) = palette.as_mut() else {
+        return false;
+    };
     let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
     match key.code {
         KeyCode::Esc => {

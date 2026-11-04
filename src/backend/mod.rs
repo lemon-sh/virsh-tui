@@ -3,9 +3,8 @@
 pub mod demo;
 pub mod virsh;
 
-use color_eyre::Result;
-
 use crate::model::{DhcpLease, DomainSummary, HostInfo, NetworkSummary, PoolSummary, Snapshot};
+use color_eyre::Result;
 
 /// Raw per-domain stats from `virsh domstats --raw`.
 #[derive(Debug, Clone, Default, PartialEq)]
