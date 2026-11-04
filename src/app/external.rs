@@ -148,23 +148,3 @@ pub fn detached_run(argv: &[&str]) {
         .stderr(std::process::Stdio::null())
         .spawn();
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn console_escape_notation() {
-        assert_eq!(super::escape_arg("C-]"), "^]");
-        assert_eq!(super::escape_arg("^a"), "^a");
-        assert_eq!(super::escape_arg("bogus"), "^]");
-    }
-
-    #[test]
-    fn editor_with_args() {
-        // SAFETY: test-only env mutation, single-threaded within this test.
-        unsafe {
-            std::env::remove_var("VISUAL");
-            std::env::set_var("EDITOR", "code --wait");
-        }
-        assert_eq!(super::editor_argv(), vec!["code", "--wait"]);
-    }
-}

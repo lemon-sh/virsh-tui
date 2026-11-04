@@ -1,3 +1,0 @@
- Expiry Time   MAC address   Protocol   IP address   Hostname   Client ID or DUID
------------------------------------------------------------------------------------
-

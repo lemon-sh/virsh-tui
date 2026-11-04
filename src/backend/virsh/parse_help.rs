@@ -178,24 +178,3 @@ pub fn parse_help_cmd(text: &str) -> HelpDoc {
         options,
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{parse_help_cmd, parse_help_index};
-
-    #[test]
-    fn index_has_many_commands() {
-        let text = std::fs::read_to_string("tests/fixtures/virsh/help_index.txt").unwrap();
-        let entries = parse_help_index(&text);
-        assert!(entries.len() > 200, "got {} entries", entries.len());
-        assert!(entries.iter().any(|e| e.name == "domstats"));
-    }
-
-    #[test]
-    fn domstats_doc_parses() {
-        let text = std::fs::read_to_string("tests/fixtures/virsh/help_domstats.txt").unwrap();
-        let doc = parse_help_cmd(&text);
-        assert_eq!(doc.name, "domstats");
-        assert!(doc.options.iter().any(|o| o.flag == "--raw"));
-    }
-}

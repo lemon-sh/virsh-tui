@@ -6,14 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-### Changed
+### Added
+- Dynamic which-key leader popup reflecting real-time keymap and prefixes.
+- Focus cycling with `Tab` / `Shift-Tab` (`cycle_focus`) across multi-panel views (Networks, Storage, Settings).
+- Instant tab switching with single digits `1`..`5`.
+- Comprehensive architecture and developer documentation suite under `docs/`.
+- Deferred raw mode and session TTY detachment for clean PolicyKit authentication handling.
 
-- The dashboard shows the metrics next to the domain list from 153 columns
-  (it needed 162). The list gives up its spare columns first, so common
-  159-column terminals get the same layout as the screenshots.
-- The actions in the domain overview are plain key hints (orange key,
-  action text) in an aligned grid instead of boxed chips; the CPU graph
-  adapts its height to the space left.
+### Changed
+- Removed counts and dot-repeat in favor of instant view transitions.
+- Replaced separate pane focus keys (`h`/`l`) with unified `Tab`/`Shift-Tab` focus cycling.
+- Refactored project documentation suite.
 
 ## [0.1.0] - 2026-10-07
 
@@ -30,11 +33,5 @@ First public release.
 - Nine built-in themes, custom themes, settings screen, 256-colour fallback
 - `--demo`, `--dry-run`, `--probe` and `--dump`
 
-Download `virsh-tui-v0.1.0-x86_64-unknown-linux-gnu.tar.gz` from the release
-page, or build from source with
-`cargo install --locked --git https://github.com/SyscallBrain/virsh-tui --tag v0.1.0`.
-The [user guide](https://syscallbrain.github.io/virsh-tui/) covers
-requirements and setup.
-
-[Unreleased]: https://github.com/SyscallBrain/virsh-tui/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/SyscallBrain/virsh-tui/releases/tag/v0.1.0
+[Unreleased]: https://github.com/lemon-sh/virsh-tui/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/lemon-sh/virsh-tui/releases/tag/v0.1.0

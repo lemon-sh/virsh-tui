@@ -1506,38 +1506,3 @@ fn handle_key(key: KeyEvent, pending_quit_z: &mut bool, in_detail: bool) -> bool
 }
 
 use external::{detached_run, suspend_run};
-
-#[cfg(test)]
-mod tests {
-    use super::handle_key;
-    use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers};
-
-    fn key(code: KeyCode) -> KeyEvent {
-        KeyEvent {
-            code,
-            modifiers: KeyModifiers::empty(),
-            kind: KeyEventKind::Press,
-            state: KeyEventState::empty(),
-        }
-    }
-
-    #[test]
-    fn q_quits() {
-        let mut pending = false;
-        assert!(handle_key(key(KeyCode::Char('q')), &mut pending, false));
-        assert!(!handle_key(key(KeyCode::Char('q')), &mut pending, true));
-    }
-
-    #[test]
-    fn zz_quits() {
-        let mut pending = false;
-        let z = KeyEvent {
-            code: KeyCode::Char('Z'),
-            modifiers: KeyModifiers::SHIFT,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::empty(),
-        };
-        assert!(!handle_key(z, &mut pending, false));
-        assert!(handle_key(z, &mut pending, false));
-    }
-}

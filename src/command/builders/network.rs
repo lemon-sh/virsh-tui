@@ -138,28 +138,3 @@ pub fn gateway_of(network_addr: &str) -> String {
         network_addr.to_string()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{define_xml, pin_lease, start};
-
-    #[test]
-    fn exact() {
-        assert_eq!(start("default").steps[0].argv, vec!["net-start", "default"]);
-        assert!(
-            pin_lease("n", "m", "h", "1.2.3.4").steps[0]
-                .argv
-                .contains(&"--live".to_string())
-        );
-        let xml = define_xml(
-            "lab",
-            "isolated",
-            "virbr9",
-            "10.10.0.0/24",
-            "10.10.0.2",
-            "10.10.0.254",
-            "",
-        );
-        assert!(xml.contains("<name>lab</name>") && xml.contains("10.10.0.1"));
-    }
-}

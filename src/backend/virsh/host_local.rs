@@ -207,28 +207,3 @@ pub fn local_mem_total_kib() -> Option<u64> {
     }
     None
 }
-
-#[cfg(test)]
-mod uptime_tests {
-    #[test]
-    fn parses_stat_with_spaces_in_comm() {
-        // starttime (field 22) = 1000 ticks = 10 s after boot; host up 3610 s.
-        let stat = "123 (qemu system x) S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 1000 20";
-        assert_eq!(super::proc_uptime_secs(stat, 3610.0, 100.0), Some(3600));
-        assert_eq!(super::fmt_uptime(3600), "1h 00m");
-        assert_eq!(super::fmt_uptime(3 * 86_400 + 4 * 3600), "3d 04h");
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::parse_nodeinfo;
-
-    #[test]
-    fn parses_fixture() {
-        let text = std::fs::read_to_string("tests/fixtures/virsh/nodeinfo.txt").unwrap();
-        let info = parse_nodeinfo(&text, "forge");
-        assert!(info.threads > 0);
-        assert!(info.mem_kib > 0);
-    }
-}

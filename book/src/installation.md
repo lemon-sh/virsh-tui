@@ -27,14 +27,14 @@ You need Rust 1.88 or newer. Install it with [rustup](https://rustup.rs) if your
 distribution ships an older version.
 
 ```sh
-cargo install --locked --git https://github.com/SyscallBrain/virsh-tui
+cargo install --locked --git https://github.com/lemon-sh/virsh-tui
 ```
 
 This puts the `virsh-tui` binary in `~/.cargo/bin`. To build from a clone
 instead:
 
 ```sh
-git clone https://github.com/SyscallBrain/virsh-tui
+git clone https://github.com/lemon-sh/virsh-tui
 cd virsh-tui
 cargo build --release
 ./target/release/virsh-tui --demo
@@ -49,7 +49,8 @@ virsh-tui runs `virsh` as your user, so it sees exactly what `virsh` sees.
   `sudo usermod -aG libvirt "$USER"`, then log out and back in.
 - `qemu:///session` needs no extra rights; it manages the per-user daemon.
 - For remote hosts (`qemu+ssh://user@host/system`), set up key-based SSH
-  login first. virsh-tui cannot answer password prompts.
+  login first. virsh-tui supports startup PolicyKit prompts on local sessions,
+  but cannot handle SSH password prompts in background streams.
 
 Check that `virsh -c qemu:///system list --all` works in a shell before
 starting virsh-tui. If it does not, see [Troubleshooting](troubleshooting.md).

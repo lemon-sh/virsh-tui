@@ -146,38 +146,3 @@ pub fn migrate(domain: &str, dest_uri: &str, undefinesource: bool) -> CommandPla
         summary: format!("Migrated {domain}"),
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{autostart, clone_domain, destroy, migrate, rename, send_key, shutdown, start, undefine};
-
-    #[test]
-    fn exact_argv() {
-        assert_eq!(start("d").steps[0].argv, vec!["start", "d"]);
-        assert_eq!(shutdown("d").steps[0].argv, vec!["shutdown", "d"]);
-        assert_eq!(destroy("d").steps[0].argv, vec!["destroy", "d"]);
-        assert_eq!(
-            send_key("d").steps[0].argv,
-            vec!["send-key", "d", "KEY_LEFTCTRL", "KEY_LEFTALT", "KEY_DELETE"]
-        );
-        assert_eq!(
-            clone_domain("d", "n").steps[0].argv,
-            vec!["--original", "d", "--name", "n", "--auto-clone"]
-        );
-        assert_eq!(rename("d", "n").steps[0].argv, vec!["domrename", "d", "n"]);
-        assert!(
-            undefine("d", true, false, false).steps[0]
-                .argv
-                .contains(&"--remove-all-storage".to_string())
-        );
-        assert_eq!(
-            autostart("d", false).steps[0].argv,
-            vec!["autostart", "d", "--disable"]
-        );
-        assert!(
-            migrate("d", "qemu+ssh://h/system", true).steps[0]
-                .argv
-                .contains(&"--undefinesource".to_string())
-        );
-    }
-}

@@ -1,7 +1,7 @@
 [book]
 title = "virsh-tui"
 description = "A keyboard-driven terminal UI for libvirt and virsh"
-authors = ["SyscallBrain"]
+authors = ["SyscallBrain", "lemonsh"]
 language = "en"
 src = "src"
 
@@ -12,8 +12,8 @@ create-missing = false
 [output.html]
 default-theme = "navy"
 preferred-dark-theme = "navy"
-git-repository-url = "https://github.com/SyscallBrain/virsh-tui"
-edit-url-template = "https://github.com/SyscallBrain/virsh-tui/edit/main/book/{path}"
+git-repository-url = "https://github.com/lemon-sh/virsh-tui"
+edit-url-template = "https://github.com/lemon-sh/virsh-tui/edit/main/book/{path}"
 site-url = "/virsh-tui/"
 additional-css = ["custom.css"]
 

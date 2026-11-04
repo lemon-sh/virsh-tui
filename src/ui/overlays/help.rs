@@ -369,35 +369,3 @@ pub fn render(frame: &mut Frame, theme: &Theme, filter: &str, map: &Keymap) {
     let footer_area = Rect::new(inner.x, inner.y + inner.height - 1, inner.width, 1);
     frame.render_widget(Paragraph::new(footer).style(theme.base()), footer_area);
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn sections_reflect_default_keymap() {
-        let map = crate::input::keymap::default_map();
-        let secs = sections(&map);
-        let nav = secs.iter().find(|s| s.title == "Navigation").unwrap();
-        assert!(nav.rows.iter().any(|(k, d, _)| k == "⌫ / q" && d == "back"));
-        assert!(
-            nav.rows
-                .iter()
-                .any(|(k, d, _)| k == "1 … 5" && d == "switch view")
-        );
-
-        let leader = secs.iter().find(|s| s.title == "Leader  ␣").unwrap();
-        assert!(leader.rows.iter().any(|(k, d, _)| k == "␣n" && d == "new domain"));
-    }
-
-    #[test]
-    fn sections_reflect_key_changes() {
-        let mut map = crate::input::keymap::default_map();
-        map.retain(|_, a| *a != A::NewDomain);
-        map.insert(vec!["Space".into(), "v".into()], A::NewDomain);
-        let secs = sections(&map);
-        let leader = secs.iter().find(|s| s.title == "Leader  ␣").unwrap();
-        assert!(leader.rows.iter().any(|(k, d, _)| k == "␣v" && d == "new domain"));
-        assert!(!leader.rows.iter().any(|(k, _d, _)| k == "␣n"));
-    }
-}

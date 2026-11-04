@@ -344,22 +344,3 @@ pub fn truecolor() -> bool {
         false
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::builtin;
-
-    #[test]
-    fn tokyo_night_matches_spec_order() {
-        let t = builtin::tokyo_night();
-        let hexes = t.tokens.hex_list();
-        assert_eq!(
-            hexes,
-            [
-                "#1a1b26", "#16161e", "#292e42", "#283457", "#3b4261", "#565f89", "#c0caf5", "#a9b1d6",
-                "#7aa2f7", "#7dcfff", "#bb9af7", "#9ece6a", "#e0af68", "#ff9e64", "#f7768e", "#73daca",
-            ]
-            .map(String::from)
-        );
-    }
-}

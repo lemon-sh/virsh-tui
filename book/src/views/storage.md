@@ -4,7 +4,7 @@
 
 Storage pools on the left, the selected pool's volumes on the right. Each
 volume shows its format, capacity, allocation, backing chain and the domains
-that use it. `h` and `l` move the focus between the two lists.
+that use it. `Tab` and `Shift-Tab` move the focus between the two lists.
 
 ## Pools
 

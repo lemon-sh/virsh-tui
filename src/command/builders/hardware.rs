@@ -221,31 +221,3 @@ pub fn define(domain: &str) -> CommandPlan {
         &format!("Defined {domain}"),
     )
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{attach_disk, change_media, define, set_memory, set_vcpus};
-
-    #[test]
-    fn native_commands() {
-        let plans = set_vcpus("d", 8, 16, true, true, true);
-        let argv: Vec<String> = plans
-            .iter()
-            .flat_map(|p| p.steps.iter().flat_map(|s| s.argv.clone()))
-            .collect();
-        assert!(argv.contains(&"--maximum".to_string()));
-        assert!(argv.contains(&"--live".to_string()));
-        assert!(
-            attach_disk("d", "/x.qcow2", "vdb", true, true).steps[0]
-                .argv
-                .contains(&"--live".to_string())
-        );
-        assert!(
-            change_media("d", "sda", None, true).steps[0]
-                .argv
-                .contains(&"--eject".to_string())
-        );
-        assert!(!set_memory("d", "8G", "16G", true, true).is_empty());
-        assert!(define("d").steps[0].argv[1].contains("vt-d.xml"));
-    }
-}

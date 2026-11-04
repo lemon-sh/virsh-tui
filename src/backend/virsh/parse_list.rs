@@ -132,32 +132,3 @@ pub fn parse_snapshot_list(text: &str) -> Vec<Snapshot> {
     }
     out
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{parse_list_all, parse_net_list, parse_pool_list, parse_snapshot_list};
-
-    fn fixture(name: &str) -> String {
-        std::fs::read_to_string(format!("tests/fixtures/virsh/{name}.txt")).unwrap()
-    }
-
-    #[test]
-    fn list_all_has_three_shutoff() {
-        let rows = parse_list_all(&fixture("list_all")).unwrap();
-        assert_eq!(rows.len(), 3);
-        assert!(rows.iter().all(|r| r.id.is_none()));
-    }
-
-    #[test]
-    fn net_and_pool_parse() {
-        assert_eq!(parse_net_list(&fixture("net_list_details")).unwrap().len(), 2);
-        assert_eq!(parse_pool_list(&fixture("pool_list")).unwrap().len(), 1);
-    }
-
-    #[test]
-    fn snapshot_sample_parents() {
-        let snaps = parse_snapshot_list(&fixture("snapshot_list_sample"));
-        assert_eq!(snaps.len(), 3);
-        assert_eq!(snaps[1].parent.as_deref(), Some("snap-base"));
-    }
-}

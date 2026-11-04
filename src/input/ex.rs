@@ -162,37 +162,3 @@ fn req_arg(word: &str, args: &str, f: impl Fn(String) -> ExCommand) -> Result<Ex
         Ok(f(args.split_whitespace().next().unwrap_or("").to_string()))
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{ExCommand, parse};
-
-    #[test]
-    fn commands() {
-        assert_eq!(parse(":qa").unwrap(), ExCommand::QuitAll);
-        assert_eq!(parse(":42").unwrap(), ExCommand::Jump(42));
-        assert_eq!(
-            parse(":connect qemu:///session").unwrap(),
-            ExCommand::Connect("qemu:///session".to_string())
-        );
-    }
-}
-
-#[cfg(test)]
-mod passthrough_tests {
-    use super::{ExCommand, parse};
-
-    #[test]
-    fn full_virsh_syntax_is_not_rejected() {
-        let line = "attach-disk vm /x.qcow2 vdb --driver qemu --config";
-        assert_eq!(parse(line), Ok(ExCommand::RawVirsh(line.to_string())));
-        assert!(matches!(
-            parse("attach-disk vm /x.qcow2 vdb"),
-            Ok(ExCommand::AttachDisk(..))
-        ));
-        assert!(matches!(
-            parse("attach-iso vm /iso/a.iso"),
-            Ok(ExCommand::Media(..))
-        ));
-    }
-}

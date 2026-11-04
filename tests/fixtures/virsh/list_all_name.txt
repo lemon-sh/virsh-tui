@@ -1,4 +1,0 @@
-archlinux-install
-fedora-install
-metasploitable2
-

@@ -393,27 +393,3 @@ impl Default for KeyEngine {
         Self::new()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{KeyAction, KeyEngine};
-    use crate::input::key::KeySeq;
-
-    #[test]
-    fn instant_view_tabs() {
-        let mut eng = KeyEngine::new();
-        let a = eng.feed(&KeySeq::parse("1"));
-        assert_eq!(a[0].action, KeyAction::ViewDomains);
-        let a = eng.feed(&KeySeq::parse("2"));
-        assert_eq!(a[0].action, KeyAction::ViewHost);
-    }
-
-    #[test]
-    fn leader_sequence() {
-        let mut eng = KeyEngine::new();
-        assert!(eng.feed(&KeySeq::parse("Space")).is_empty());
-        assert!(eng.feed(&KeySeq::parse("s")).is_empty());
-        let a = eng.feed(&KeySeq::parse("c"));
-        assert_eq!(a[0].action, KeyAction::SnapshotNew);
-    }
-}

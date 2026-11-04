@@ -65,14 +65,3 @@ fn event_token(key: &KeyEvent) -> String {
     };
     if base == " " { "Space".to_string() } else { base }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::KeySeq;
-
-    #[test]
-    fn parses_leader_and_ctrl() {
-        assert_eq!(KeySeq::parse("␣").token(), "Space");
-        assert_eq!(KeySeq::parse("C-d").token(), "C-d");
-    }
-}

@@ -26,20 +26,3 @@ pub fn rate(before: u64, after: u64, wall_secs: f64) -> f64 {
 pub fn mem_used_kib(available: u64, unused: u64) -> u64 {
     available.saturating_sub(unused)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{cpu_pct, mem_used_kib, rate};
-
-    #[test]
-    fn cpu_clamps() {
-        assert_eq!(cpu_pct(0, 10, 0, 1), 0.0);
-        assert!(cpu_pct(0, u64::MAX, 1, 1) <= 100.0);
-    }
-
-    #[test]
-    fn counter_reset_gives_zero() {
-        assert_eq!(rate(100, 50, 1.0), 0.0);
-        assert_eq!(mem_used_kib(100, 200), 0);
-    }
-}

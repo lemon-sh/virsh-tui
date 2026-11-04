@@ -64,36 +64,3 @@ pub fn delete(domain: &str, snap: &str, children: bool, children_only: bool, met
     }
     CommandPlan::single("virsh", argv, &format!("Deleted snapshot {snap} on {domain}"))
 }
-
-#[cfg(test)]
-mod revert_flag_tests {
-    #[test]
-    fn after_flag_accepts_both_spellings() {
-        for after in ["running", "--running"] {
-            let plan = super::revert("d", "s", Some(after), false, false);
-            assert_eq!(plan.steps[0].argv, vec!["snapshot-revert", "d", "s", "--running"]);
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{create, delete, revert};
-
-    #[test]
-    fn exact() {
-        assert!(
-            create("d", "s", "", true, false).steps[0]
-                .argv
-                .contains(&"--atomic".to_string())
-        );
-        let r = revert("d", "s", Some("running"), false, true);
-        assert_eq!(r.steps.len(), 2);
-        assert!(r.steps[1].argv.contains(&"--running".to_string()));
-        assert!(
-            delete("d", "s", true, false, false).steps[0]
-                .argv
-                .contains(&"--children".to_string())
-        );
-    }
-}

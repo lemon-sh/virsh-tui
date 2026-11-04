@@ -4,17 +4,16 @@
 
 A keyboard-driven terminal UI for libvirt, with vim keys and live graphs.
 
-[![CI](https://github.com/SyscallBrain/virsh-tui/actions/workflows/ci.yml/badge.svg)](https://github.com/SyscallBrain/virsh-tui/actions/workflows/ci.yml)
-[![Docs](https://github.com/SyscallBrain/virsh-tui/actions/workflows/pages.yml/badge.svg)](https://syscallbrain.github.io/virsh-tui/)
+[![CI](https://github.com/lemon-sh/virsh-tui/actions/workflows/ci.yml/badge.svg)](https://github.com/lemon-sh/virsh-tui/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Rust 1.88+](https://img.shields.io/badge/rust-1.88%2B-orange.svg?logo=rust)](https://www.rust-lang.org)
 [![Built With Ratatui](https://img.shields.io/badge/Built_With_Ratatui-000?logo=ratatui&logoColor=fff)](https://ratatui.rs)
 [![Platform: Linux](https://img.shields.io/badge/platform-linux-lightgrey.svg?logo=linux&logoColor=white)](#install)
 
-[Documentation](https://syscallbrain.github.io/virsh-tui/) ·
+[Documentation](book/) ·
 [Install](#install) ·
-[Key bindings](https://syscallbrain.github.io/virsh-tui/keys.html) ·
-[Report a bug](https://github.com/SyscallBrain/virsh-tui/issues/new?template=bug_report.yml)
+[Key bindings](book/src/keys.md) ·
+[Report a bug](https://github.com/lemon-sh/virsh-tui/issues/new)
 
 ![virsh-tui domains dashboard](book/src/images/dashboard.png)
 
@@ -47,7 +46,7 @@ It works with `qemu:///system`, `qemu:///session` and remote hosts over
 - Six-step new domain wizard that builds and runs `virt-install`
 - `:` command line with Tab completion for commands, domains, themes, paths
   and every `virsh` flag; anything else is passed to `virsh`
-- Fuzzy command palette, which-key hints, remappable keys
+- Fuzzy command palette, dynamic which-key leader popup, remappable keys
 - Nine themes plus custom ones, a settings screen, and a 256-colour fallback
 - `--dry-run` to see what each key would run, `--demo` to try it with no
   libvirt at all
@@ -86,13 +85,13 @@ You need Linux, the libvirt client tools (`virsh`) and Rust 1.88 or newer.
 graphical viewer.
 
 ```sh
-cargo install --locked --git https://github.com/SyscallBrain/virsh-tui
+cargo install --locked --git https://github.com/lemon-sh/virsh-tui
 ```
 
 Or build from a clone:
 
 ```sh
-git clone https://github.com/SyscallBrain/virsh-tui
+git clone https://github.com/lemon-sh/virsh-tui
 cd virsh-tui
 cargo build --release
 ./target/release/virsh-tui
@@ -100,7 +99,7 @@ cargo build --release
 
 To manage `qemu:///system`, your user must be allowed to use it, which on
 most distributions means being in the `libvirt` group. The
-[installation guide](https://syscallbrain.github.io/virsh-tui/installation.html)
+[installation guide](book/src/installation.md)
 has the details.
 
 ## Quick start
@@ -116,6 +115,7 @@ virsh-tui --dry-run              # show commands instead of running them
 | Key | Action |
 |-----|--------|
 | `j` / `k`, `gg` / `G` | move |
+| `Tab` / `S-Tab` | cycle focus across panes |
 | `Enter` / `Backspace` | open / back |
 | `1` … `5` | Domains, Host, Networks, Storage, Events |
 | `s` / `S` / `D` | start / shutdown / destroy |
@@ -131,22 +131,20 @@ virsh-tui --dry-run              # show commands instead of running them
 
 ## Documentation
 
-The [user guide](https://syscallbrain.github.io/virsh-tui/) covers every view,
-the wizard, the command line, configuration, themes, key remapping and
-troubleshooting. Its source is in [`book/`](book/src/SUMMARY.md).
+The user guide is available in [`book/`](book/src/SUMMARY.md).
+Internal developer documentation and architecture specifications live in [`docs/`](docs/).
 
 ## Configuration
 
 Settings live in `~/.config/virsh-tui/config.toml`, key overrides in
 `keymap.toml` and custom themes in `themes/`. The settings screen (`,`) and
 `:set key=value` write the file for you. See
-[Configuration](https://syscallbrain.github.io/virsh-tui/configuration.html).
+[Configuration](book/src/configuration.md).
 
 ## Contributing
 
 Issues and pull requests are welcome. Read
-[CONTRIBUTING.md](CONTRIBUTING.md) for how to build, test and regenerate the
-screenshots.
+[CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 

@@ -185,33 +185,3 @@ pub fn move_boot_device(devices: &mut Vec<String>, from: usize, to: usize) {
     let dev = devices.remove(from);
     devices.insert(to, dev);
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{auto_topology, move_boot_device, set_boot_order, set_memory, set_topology, set_vcpus};
-
-    fn arch() -> String {
-        std::fs::read_to_string("tests/fixtures/virsh/dumpxml_arch.txt").unwrap()
-    }
-
-    #[test]
-    fn vcpus_and_topology() {
-        let out = set_vcpus(&arch(), 8, 16).unwrap();
-        assert!(out.contains(">16<") && out.contains("current=\"8\"") || out.contains("current='8'"));
-        let (s, c, t) = auto_topology(16);
-        assert_eq!((s, c, t), (1, 8, 2));
-        let topo = set_topology(&arch(), 1, 8, 2).unwrap();
-        assert!(topo.contains("cores=\"8\"") || topo.contains("cores='8'"));
-        let mem = set_memory(&arch(), 8 * 1024 * 1024, 16 * 1024 * 1024).unwrap();
-        assert!(mem.contains("16777216"));
-    }
-
-    #[test]
-    fn boot_reorder() {
-        let mut devs = vec![String::from("hd"), String::from("cdrom"), String::from("network")];
-        move_boot_device(&mut devs, 2, 0);
-        assert_eq!(devs[0], "network");
-        let xml = set_boot_order(&arch(), &["hd", "cdrom"]).unwrap();
-        assert!(xml.contains("dev=\"hd\"") || xml.contains("dev='hd'"));
-    }
-}

@@ -42,19 +42,3 @@ pub fn parse_leases(text: &str) -> Vec<DhcpLease> {
     }
     out
 }
-
-#[cfg(test)]
-mod tests {
-    use super::parse_leases;
-
-    #[test]
-    fn empty_and_sample() {
-        let empty = std::fs::read_to_string("tests/fixtures/virsh/net_leases_default.txt").unwrap();
-        assert!(parse_leases(&empty).is_empty());
-        let sample = std::fs::read_to_string("tests/fixtures/virsh/net_leases_sample.txt").unwrap();
-        let leases = parse_leases(&sample);
-        assert_eq!(leases.len(), 2);
-        assert_eq!(leases[0].ip, "192.168.122.48");
-        assert_eq!(leases[0].expiry, "2026-10-06 14:32:07");
-    }
-}

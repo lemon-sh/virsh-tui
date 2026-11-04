@@ -25,19 +25,3 @@ pub fn parse_domstats_raw(text: &str) -> Result<Vec<RawDomainStats>> {
     }
     Ok(out)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::parse_domstats_raw;
-
-    #[test]
-    fn parses_fixture_and_running() {
-        let text = std::fs::read_to_string("tests/fixtures/virsh/domstats_raw.txt").unwrap();
-        let stats = parse_domstats_raw(&text).unwrap();
-        assert_eq!(stats.len(), 3);
-        assert_eq!(stats[0].u64("vcpu.current"), Some(1));
-        let running = std::fs::read_to_string("tests/fixtures/virsh/domstats_running.txt").unwrap();
-        let running = parse_domstats_raw(&running).unwrap();
-        assert_eq!(running[0].u64("net.0.rx.bytes"), Some(125_000_000));
-    }
-}

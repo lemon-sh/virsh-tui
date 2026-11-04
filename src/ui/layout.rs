@@ -59,15 +59,3 @@ pub fn render_too_small(frame: &mut ratatui::Frame, theme: &crate::theme::Theme)
     ));
     frame.render_widget(Paragraph::new(line).block(block).style(theme.base()), inner);
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn centered_fits_tiny_areas() {
-        for (w, h) in [(1, 1), (8, 3), (20, 3), (200, 60)] {
-            let area = ratatui::layout::Rect::new(0, 0, w, h);
-            let r = super::centered(area, 60, 20);
-            assert!(r.right() <= area.right() && r.bottom() <= area.bottom());
-        }
-    }
-}

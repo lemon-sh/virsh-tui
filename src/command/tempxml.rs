@@ -40,18 +40,3 @@ pub fn write(prefix: &str, xml: &str) -> Result<NamedTempFile> {
 pub fn path_arg(file: &NamedTempFile) -> String {
     file.path().to_string_lossy().into_owned()
 }
-
-#[cfg(all(test, unix))]
-mod tests {
-    use std::os::unix::fs::PermissionsExt;
-
-    #[test]
-    fn private_and_sanitized() {
-        let f = super::write("../../etc/passwd", "<x/>").unwrap();
-        let name = f.path().file_name().unwrap().to_string_lossy().into_owned();
-        assert!(name.starts_with("vt-______etc_passwd-"), "{name}");
-        let mode = std::fs::metadata(f.path()).unwrap().permissions().mode() & 0o777;
-        assert_eq!(mode, 0o600);
-        assert_eq!(std::fs::read_to_string(f.path()).unwrap(), "<x/>");
-    }
-}

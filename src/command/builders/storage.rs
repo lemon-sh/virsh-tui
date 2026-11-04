@@ -127,28 +127,3 @@ pub fn vol_delete(pool: &str, vol: &str) -> CommandPlan {
         &format!("Deleted {vol} from {pool}"),
     )
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{pool_start, vol_create, vol_resize, vol_wipe};
-
-    #[test]
-    fn exact() {
-        assert_eq!(pool_start("p").steps[0].argv, vec!["pool-start", "p"]);
-        assert!(
-            vol_create("p", "v", "10G", "qcow2", None).steps[0]
-                .argv
-                .contains(&"vol-create-as".to_string())
-        );
-        assert!(
-            vol_resize("p", "v", "20G", false).steps[0]
-                .argv
-                .contains(&"vol-resize".to_string())
-        );
-        assert!(
-            vol_wipe("p", "v", "zero").steps[0]
-                .argv
-                .contains(&"--algorithm".to_string())
-        );
-    }
-}

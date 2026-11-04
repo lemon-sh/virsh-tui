@@ -14,6 +14,7 @@ key map, so it reflects your `keymap.toml`. Type to filter it.
 | `j` / `k` | down / up | `move_down` / `move_up` |
 | `gg` / `G` | top / bottom | `go_top` / `go_bottom` |
 | `Ctrl-d` / `Ctrl-u` | half page down / up | `half_down` / `half_up` |
+| `Tab` / `Shift-Tab` | cycle focus between panels | `cycle_focus` |
 | `Enter` | open | `open` |
 | `Backspace`, `q` | back (`q` quits from the top level) | `back` |
 | `/` | filter | `filter` |
@@ -72,7 +73,7 @@ key map, so it reflects your `keymap.toml`. Type to filter it.
 | `o` | cycle sort | `sort_cycle` |
 | `f` / `F` | cycle filter chips | `chip_cycle` / `chip_cycle_back` |
 | `t` | history window 60 s / 5 min / 1 h | `window_cycle` |
-| `l` | focus the leases table (Networks) | `lease_focus` |
+| `Tab` | cycle panel focus (Networks, Storage) | `cycle_focus` |
 | `u` | undo field (hardware editor) | `undo_field` |
 | `gx` | go to the XML tab | `goto_xml` |
 
@@ -86,7 +87,6 @@ key map, so it reflects your `keymap.toml`. Type to filter it.
 | `,` | settings | `settings` |
 | `Ctrl-r` | refresh now | `refresh` |
 | `Ctrl-l` | redraw the screen | `redraw` |
-| `.` | repeat the last change | |
 | `q`, `ZZ`, `Ctrl-c` | quit | `quit` |
 
 Some screens add their own keys, listed in the status bar: the
@@ -101,6 +101,7 @@ Create `~/.config/virsh-tui/keymap.toml`:
 [normal]
 shutdown = ["S", "Space q"]      # several bindings for one action
 snapshot_new = ["Space s n"]     # tokens separated by spaces
+cycle_focus = ["Tab"]
 console = ["C-t"]
 ```
 
@@ -125,7 +126,7 @@ All action names: `move_up`, `move_down`, `go_top`, `go_bottom`, `half_down`,
 `undefine`, `rename`, `clone`, `migrate`, `send_key`, `export_xml`,
 `new_domain`, `yank_name`, `yank_uuid`, `yank_ip`, `yank_cmd`, `mark`,
 `visual`, `sort_cycle`, `chip_cycle`, `chip_cycle_back`, `window_cycle`,
-`lease_focus`, `lease_pin`, `lease_unpin`, `ex`, `palette`, `help`,
+`cycle_focus`, `lease_pin`, `lease_unpin`, `ex`, `palette`, `help`,
 `settings`, `refresh`, `redraw`, `quit`, `quit_all`, `snapshot_new`,
 `snapshot_revert`, `snapshot_delete`, `insert_media`, `eject_media`,
 `disk_attach`, `disk_resize`, `nic_attach`, `nic_link`, `boot_order`,

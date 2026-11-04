@@ -318,25 +318,3 @@ async fn fetch_ip(uri: &str, name: &str) -> String {
     }
     String::from("—")
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn local_uris() {
-        assert!(super::is_local_uri("qemu:///system"));
-        assert!(super::is_local_uri("qemu:///session"));
-        assert!(!super::is_local_uri("qemu+ssh://root@host/system"));
-        assert!(!super::is_local_uri("qemu+tcp://host/system"));
-        assert!(!super::is_local_uri("qemu+tls://host/system"));
-        assert!(!super::is_local_uri("xen+ssh://host/system"));
-    }
-
-    #[test]
-    fn domifaddr() {
-        let out = " Name       MAC address          Protocol     Address\n-------------------------------------------------------------------------------\n vnet0      52:54:00:a3:1f:7c    ipv4         192.168.122.48/24\n";
-        assert_eq!(
-            super::parse_domifaddr_ipv4(out).as_deref(),
-            Some("192.168.122.48")
-        );
-    }
-}

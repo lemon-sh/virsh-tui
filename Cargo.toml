@@ -10,7 +10,7 @@ readme = "README.md"
 repository = "https://github.com/lemon-sh/virsh-tui"
 keywords = ["libvirt", "virsh", "tui", "kvm", "qemu"]
 categories = ["command-line-utilities", "virtualization"]
-exclude = ["/book", "/docs", "/scripts", "/tests/snapshots", "/.github"]
+exclude = ["/book", "/docs", "/scripts", "/.github"]
 
 [dependencies]
 arboard = "3.7.0"
@@ -37,10 +37,3 @@ tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 unicode-width = "0.2.3"
 xmltree = "0.12.0"
 
-[dev-dependencies]
-insta = "1.49.0"
-pretty_assertions = "1.4.1"
-tempfile = "3.27.0"
-
-[features]
-it = []

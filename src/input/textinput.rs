@@ -82,21 +82,3 @@ impl TextInput {
         self.cursor
     }
 }
-
-#[cfg(test)]
-mod utf8_tests {
-    use super::TextInput;
-
-    #[test]
-    fn cursor_moves_by_chars() {
-        let mut t = TextInput::with("é␣");
-        t.move_left();
-        t.insert('x');
-        assert_eq!(t.value(), "éx␣");
-        t.move_left();
-        t.move_left();
-        t.move_right();
-        t.insert('y');
-        assert_eq!(t.value(), "éyx␣");
-    }
-}

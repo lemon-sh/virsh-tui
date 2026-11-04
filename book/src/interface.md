@@ -37,17 +37,17 @@ shows a "terminal too small" notice instead of a broken layout.
 | `VISUAL` | `V` | `j`/`k` extend a selection of domains |
 | `CONFIRM` | a destructive action | `y` confirms, `n` or `Esc` cancels |
 
-## Counts and repeat
+## Instant view switching
 
-A number before a motion repeats it: `5j` moves five rows down. The single
-digits `1` to `5` on their own switch views, after a short pause to see if
-another digit follows. `.` repeats the last action that changed something.
+Pressing single digits `1` to `5` immediately switches to the corresponding view:
+`1` Domains, `2` Host, `3` Networks, `4` Storage, and `5` Events. Switching is
+instantaneous without delay or count buffering.
 
 ## The leader key
 
 `Space` is the leader key. Less common actions live behind it so that single
-letters stay free for the frequent ones. After you press `Space`, a popup in
-the bottom-right corner lists what can follow:
+letters stay free for the frequent ones. After you press `Space`, a dynamic
+popup at the bottom lists what can follow:
 
 - `Space n` new domain, `Space c` clone, `Space r` rename, `Space M` migrate
 - `Space s c` / `Space s r` / `Space s d` snapshot create, revert, delete
@@ -56,7 +56,13 @@ the bottom-right corner lists what can follow:
 - `Space i a` / `Space i l` attach a NIC or toggle its link
 - `Space x` export the XML, `Space b` edit the boot order
 
-The same popup appears for other prefixes such as `g` and `y`.
+The same which-key popup appears for other prefixes such as `g` and `y`.
+
+## Focus navigation
+
+Inside multi-panel views (Networks, Storage, and Settings), pressing `Tab` or
+`Shift-Tab` cycles focus between the available tables and option lists, allowing
+seamless keyboard navigation without conflicting with vim movement keys.
 
 ## Every action shows its command
 

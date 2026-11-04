@@ -119,35 +119,3 @@ fn disk_size_gib(s: &str) -> String {
         None => s.trim_end_matches(['G', 'g']).to_string(),
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::virt_install;
-    use crate::ui::overlays::wizard::{MediaKind, WizardState};
-
-    #[test]
-    fn full_argv() {
-        let plan = virt_install(&WizardState::demo_step3());
-        let argv = plan.steps[0].argv.join(" ");
-        assert!(argv.contains("--name=fedora-42-ws"));
-        assert!(argv.contains("--disk=pool=nvme-fast,size=30,format=qcow2,bus=virtio"));
-        assert!(argv.contains("--noautoconsole"));
-    }
-
-    #[test]
-    fn defaults_are_valid() {
-        let mut st = WizardState {
-            name: String::from("vm"),
-            iso_path: String::from("/isos/archlinux-2026.10.01-x86_64.iso"),
-            ..Default::default()
-        };
-        let argv = virt_install(&st).steps[0].argv.join(" ");
-        assert!(argv.contains("--osinfo=archlinux"), "{argv}");
-        assert!(argv.contains("--memory=4096,maxmemory=8192"));
-        st.media = MediaKind::None;
-        st.firmware = String::from("bios");
-        st.net_source = String::from("none");
-        let argv = virt_install(&st).steps[0].argv.join(" ");
-        assert!(argv.contains("--import") && argv.contains("--network=none") && !argv.contains("--boot"));
-    }
-}

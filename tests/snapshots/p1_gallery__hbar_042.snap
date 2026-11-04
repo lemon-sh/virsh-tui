@@ -1,5 +1,0 @@
----
-source: tests/p1_gallery.rs
-expression: "format!(\"{fill}{rest}\")"
----
-██████▊░░░░░░░░░

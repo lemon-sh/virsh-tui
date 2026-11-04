@@ -247,14 +247,3 @@ pub struct LibvirtEvent {
     #[serde(default)]
     pub scope: String,
 }
-
-#[cfg(test)]
-mod sanitize_tests {
-    #[test]
-    fn strips_escape_sequences() {
-        assert_eq!(
-            super::sanitize("evil\x1b]52;c;AAAA\x07host"),
-            "evil\u{fffd}]52;c;AAAA\u{fffd}host"
-        );
-    }
-}

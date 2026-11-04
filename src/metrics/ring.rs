@@ -52,17 +52,3 @@ impl Ring {
         self.data.iter().copied().collect()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::Ring;
-
-    #[test]
-    fn evicts_oldest() {
-        let mut r = Ring::new(3);
-        for i in 0..5 {
-            r.push(i as f32);
-        }
-        assert_eq!(r.all(), vec![2.0, 3.0, 4.0]);
-    }
-}

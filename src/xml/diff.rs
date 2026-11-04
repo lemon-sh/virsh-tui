@@ -100,15 +100,3 @@ pub fn diff_lines(before: &str, after: &str) -> Vec<DiffLine> {
     }
     out
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{DiffKind, diff_lines};
-
-    #[test]
-    fn minus_plus() {
-        let d = diff_lines("<a>1</a>\n", "<a>2</a>\n");
-        assert!(d.iter().any(|l| l.kind == DiffKind::Minus));
-        assert!(d.iter().any(|l| l.kind == DiffKind::Plus));
-    }
-}

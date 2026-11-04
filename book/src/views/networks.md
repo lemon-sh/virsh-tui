@@ -10,7 +10,7 @@ MAC address, followed by the interfaces attached to the network.
 | Key | Action |
 |-----|--------|
 | `j` / `k` | select a network |
-| `l` | move the focus to the leases table (and back) |
+| `Tab` / `Shift-Tab` | cycle focus between the networks and leases tables |
 | `Enter` on a lease | open the domain that owns it |
 | `Space l` | pin the selected lease as a static DHCP host entry |
 | `Space L` | remove the static host entry |

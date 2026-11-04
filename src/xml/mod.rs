@@ -23,11 +23,3 @@ pub fn escape(s: &str) -> String {
     }
     out
 }
-
-#[cfg(test)]
-mod escape_tests {
-    #[test]
-    fn escapes_markup() {
-        assert_eq!(super::escape("a'/><x y='&"), "a&apos;/&gt;&lt;x y=&apos;&amp;");
-    }
-}

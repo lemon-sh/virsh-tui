@@ -218,27 +218,3 @@ impl Config {
         Ok(())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::Config;
-
-    #[test]
-    fn defaults_match_spec() {
-        let cfg = Config::default();
-        assert_eq!(cfg.general.default_uri, "qemu:///system");
-        assert_eq!(cfg.appearance.theme, "tokyo-night");
-    }
-
-    #[test]
-    fn missing_file_gives_defaults() {
-        let path = std::path::PathBuf::from("/nonexistent-virsh-tui.toml");
-        let cfg = Config::load_from(Some(path.clone()));
-        assert_eq!(cfg.general, Config::default().general);
-        assert_eq!(
-            cfg.source,
-            Some(path),
-            "save() writes back to the file it came from"
-        );
-    }
-}

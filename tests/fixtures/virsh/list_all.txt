@@ -1,6 +1,0 @@
- Id   Name                State
-------------------------------------
- -    archlinux-install   shut off
- -    fedora-install      shut off
- -    metasploitable2     shut off
-
