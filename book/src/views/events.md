@@ -10,7 +10,7 @@ connections, balloon changes, media changes, network and pool state changes.
 | Key | Action |
 |-----|--------|
 | `j` / `k` | move through the log |
-| `f` / `F` | filter by type: all, lifecycle, devices, jobs, network, storage, app |
+| `Tab` | filter by type: all, lifecycle, devices, jobs, network, storage, app |
 | `/` | search the log |
 | `Enter` | jump to the object of the event |
 

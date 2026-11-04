@@ -63,6 +63,7 @@ pub const DEFAULT_BINDINGS: &[(&[&str], KeyAction)] = &[
     (&["m"], KeyAction::Mark),
     (&["V"], KeyAction::Visual),
     (&["Tab"], KeyAction::CycleFocus),
+    (&["S-Tab"], KeyAction::CycleFocus),
     (&["H"], KeyAction::PrevTab),
     (&["L"], KeyAction::NextTab),
     (&["["], KeyAction::PrevTab),

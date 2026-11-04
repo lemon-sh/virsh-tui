@@ -56,6 +56,7 @@ virsh-tui uses `Tab` and `Shift+Tab` (`BackTab`) mapped to `KeyAction::CycleFocu
 
 - **Networks View (Tab 3)**: Cycles focus between the virtual networks table and the active DHCP leases table.
 - **Storage View (Tab 4)**: Cycles focus between the storage pools table and the volumes table.
+- **Events View (Tab 5)**: Cycles filter chips (all, lifecycle, devices, jobs, network, storage, app).
 - **Settings View**: Cycles focus between the settings category list and the configuration options panel.
 
 This consistent focus model avoids conflicting with vim cursor navigation (`h`/`l`/`j`/`k`).
