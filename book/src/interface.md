@@ -64,6 +64,9 @@ Inside multi-panel views (Networks, Storage, and Settings), pressing `Tab` or
 `Shift-Tab` cycles focus between the available tables and option lists, allowing
 seamless keyboard navigation without conflicting with vim movement keys.
 
+Panes are separated by thin rules instead of boxes. The focused pane is the one
+with a blue rule, a bold blue title and a `▌` marker before the title.
+
 ## Every action shows its command
 
 virsh-tui builds each mutation as a plan of one or more `virsh` (or

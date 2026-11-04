@@ -240,7 +240,7 @@ impl SnapshotState {
 }
 
 fn panel_block(theme: &Theme, focused: bool, title: &str, right: Option<String>) -> Block<'static> {
-    crate::ui::widgets::panel::block(
+    crate::ui::widgets::panel::pane(
         theme,
         focused,
         title,
@@ -259,6 +259,7 @@ pub fn render(frame: &mut Frame, theme: &Theme, st: &SnapshotState, area: Rect) 
         .split(area);
     render_tree(frame, theme, st, cols[0]);
     render_details(frame, theme, st, cols[1]);
+    crate::ui::widgets::panel::vseps(frame, theme, &cols);
 }
 
 fn render_tree(frame: &mut Frame, theme: &Theme, st: &SnapshotState, area: Rect) {
@@ -290,7 +291,7 @@ fn render_tree(frame: &mut Frame, theme: &Theme, st: &SnapshotState, area: Rect)
             }
             // Fixed columns (mockup grid): name (rest) | date 12 | state 9 | kind 10.
             let used: usize = spans.iter().map(|s| s.width()).sum();
-            let name_w = (area.width as usize).saturating_sub(4 + 12 + 9 + 10 + 3);
+            let name_w = (area.width as usize).saturating_sub(2 + 12 + 9 + 10 + 3);
             spans.push(Span::raw(" ".repeat(name_w.saturating_sub(used).max(1))));
             spans.push(Span::styled(
                 format!("{:<12} ", r.date),
@@ -308,7 +309,7 @@ fn render_tree(frame: &mut Frame, theme: &Theme, st: &SnapshotState, area: Rect)
         })
         .collect();
     let right = format!("{} snapshots · internal", st.rows.len());
-    let block = crate::ui::widgets::panel::block(
+    let block = crate::ui::widgets::panel::pane(
         theme,
         true,
         "Snapshot tree",

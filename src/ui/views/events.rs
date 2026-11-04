@@ -211,7 +211,7 @@ pub fn render(frame: &mut Frame, theme: &Theme, state: &EventsState) {
             .add_modifier(Modifier::BOLD),
     )));
     let visible = state.visible();
-    let body_h = (body.height as usize).saturating_sub(4);
+    let body_h = (body.height as usize).saturating_sub(3);
     let sel = state.selected.min(visible.len().saturating_sub(1));
     let start = sel.saturating_sub(body_h.saturating_sub(3));
     for (i, ev) in visible.iter().enumerate().skip(start).take(body_h) {
@@ -265,7 +265,7 @@ pub fn render(frame: &mut Frame, theme: &Theme, state: &EventsState) {
     } else {
         format!("/{}", state.query)
     };
-    let block = crate::ui::widgets::panel::block(
+    let block = crate::ui::widgets::panel::pane(
         theme,
         true,
         "Events",

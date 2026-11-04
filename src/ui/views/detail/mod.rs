@@ -205,7 +205,7 @@ fn render_topbar(frame: &mut Frame, theme: &Theme, area: Rect, uri: &str, connec
 }
 
 fn panel_block(theme: &Theme, title: &str, right: Option<&str>) -> Block<'static> {
-    crate::ui::widgets::panel::block(
+    crate::ui::widgets::panel::pane(
         theme,
         false,
         title,
@@ -494,13 +494,14 @@ fn render_monitor_breakdown(frame: &mut Frame, theme: &Theme, state: &DetailStat
             .style(theme.base()),
         cols[2],
     );
+    crate::ui::widgets::panel::vseps(frame, theme, &cols);
 }
 
 fn render_monitor(frame: &mut Frame, theme: &Theme, state: &DetailState, area: Rect) {
     // Charts on top, per-vCPU / disk / NIC breakdown below.
     let split = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Min(8), Constraint::Length(7)])
+        .constraints([Constraint::Min(8), Constraint::Length(6)])
         .split(area);
     render_monitor_breakdown(frame, theme, state, split[1]);
     let area = split[0];
@@ -519,8 +520,8 @@ fn render_monitor(frame: &mut Frame, theme: &Theme, state: &DetailState, area: R
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .split(grid[1]);
-    let w = (left[0].width.saturating_sub(4) as usize).max(10);
-    let h = (left[0].height.saturating_sub(2) as usize).max(2);
+    let w = (left[0].width.saturating_sub(2) as usize).max(10);
+    let h = (left[0].height.saturating_sub(1) as usize).max(2);
     let n = w * 2;
     // (cpu, mem, rd, wr, rx, tx) as 0–1 series + titles.
     let (cpu, mem, rd, wr, rx, tx, titles) = match &state.live_series {
@@ -661,6 +662,7 @@ fn render_monitor(frame: &mut Frame, theme: &Theme, state: &DetailState, area: R
         let block = panel_block(theme, title, Some(&right));
         frame.render_widget(Paragraph::new(lines).block(block).style(theme.base()), area);
     }
+    crate::ui::widgets::panel::vseps(frame, theme, &grid);
 }
 
 fn render_console(frame: &mut Frame, theme: &Theme, state: &DetailState, area: Rect) {
@@ -708,7 +710,7 @@ fn render_xml(frame: &mut Frame, theme: &Theme, state: &DetailState, area: Rect)
         lines.push(Line::from(spans));
     }
     // Keep the last page full: never scroll past the end.
-    let visible = area.height.saturating_sub(2) as usize;
+    let visible = area.height.saturating_sub(1) as usize;
     state.xml_viewport_height.set(visible);
     let top = state.xml_cursor.min(lines.len().saturating_sub(visible));
     let right = format!(

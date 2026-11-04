@@ -362,7 +362,7 @@ fn render_topbar(frame: &mut Frame, theme: &Theme, area: Rect, uri: &str, connec
 }
 
 fn panel_block(theme: &Theme, focused: bool, title: &str, right: Option<String>) -> Block<'static> {
-    crate::ui::widgets::panel::block(
+    crate::ui::widgets::panel::pane(
         theme,
         focused,
         title,
@@ -378,7 +378,7 @@ fn render_body(frame: &mut Frame, theme: &Theme, state: &NetworksState, area: Re
         // Compact: stack (ifaces move to the leases view in follow-up).
         let rows = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Length(9), Constraint::Length(9), Constraint::Min(0)])
+            .constraints([Constraint::Length(8), Constraint::Length(8), Constraint::Min(0)])
             .split(body);
         render_net_list(frame, theme, state, rows[0]);
         let mid = Layout::default()
@@ -388,6 +388,7 @@ fn render_body(frame: &mut Frame, theme: &Theme, state: &NetworksState, area: Re
             .split(rows[1]);
         render_net_detail(frame, theme, state, mid[0]);
         render_traffic(frame, theme, state, mid[1]);
+        crate::ui::widgets::panel::vseps(frame, theme, &mid);
         render_leases(frame, theme, state, rows[2]);
         return;
     }
@@ -398,13 +399,13 @@ fn render_body(frame: &mut Frame, theme: &Theme, state: &NetworksState, area: Re
         .split(body);
     let left = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(10), Constraint::Min(0)])
+        .constraints([Constraint::Length(9), Constraint::Min(0)])
         .split(cols[0]);
     render_net_list(frame, theme, state, left[0]);
     render_ifaces(frame, theme, state, left[1]);
     let right = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(10), Constraint::Min(0)])
+        .constraints([Constraint::Length(9), Constraint::Min(0)])
         .split(cols[1]);
     let top = Layout::default()
         .direction(Direction::Horizontal)
@@ -414,6 +415,8 @@ fn render_body(frame: &mut Frame, theme: &Theme, state: &NetworksState, area: Re
     render_net_detail(frame, theme, state, top[0]);
     render_traffic(frame, theme, state, top[1]);
     render_leases(frame, theme, state, right[1]);
+    crate::ui::widgets::panel::vseps(frame, theme, &top);
+    crate::ui::widgets::panel::vseps(frame, theme, &cols);
 }
 
 fn render_net_list(frame: &mut Frame, theme: &Theme, state: &NetworksState, area: Rect) {
@@ -617,13 +620,13 @@ fn render_net_detail(frame: &mut Frame, theme: &Theme, state: &NetworksState, ar
             )],
         ),
     ];
-    let block = crate::ui::widgets::panel::block(theme, false, &title, right, None, None);
+    let block = crate::ui::widgets::panel::pane(theme, false, &title, right, None, None);
     frame.render_widget(Paragraph::new(lines).block(block).style(theme.base()), area);
 }
 
 fn render_traffic(frame: &mut Frame, theme: &Theme, state: &NetworksState, area: Rect) {
     let t = &theme.tokens;
-    let w = (area.width.saturating_sub(4) as usize).min(38);
+    let w = (area.width.saturating_sub(2) as usize).min(38);
     let (rx_d, tx_d, rx_t, tx_t, iface) = match &state.traffic {
         Some(tr) => (
             crate::metrics::store::padded(&tr.rx, crate::metrics::store::window_len()),
@@ -673,7 +676,7 @@ fn render_traffic(frame: &mut Frame, theme: &Theme, state: &NetworksState, area:
     } else {
         format!("Traffic · {iface}")
     };
-    let block = crate::ui::widgets::panel::block(theme, false, &title, Some(right), None, None);
+    let block = crate::ui::widgets::panel::pane(theme, false, &title, Some(right), None, None);
     frame.render_widget(Paragraph::new(lines).block(block).style(theme.base()), area);
 }
 
@@ -730,7 +733,7 @@ fn render_leases(frame: &mut Frame, theme: &Theme, state: &NetworksState, area: 
         Span::styled(" ⏎ go to domain ", Style::default().fg(t.fg2).bg(t.hl)),
     ]));
     let right = format!("{} leases · {statics} static", state.leases.len());
-    let block = crate::ui::widgets::panel::block(
+    let block = crate::ui::widgets::panel::pane(
         theme,
         state.focus == NetFocus::Leases,
         "DHCP leases",
@@ -808,6 +811,13 @@ fn render_new_form(frame: &mut Frame, theme: &Theme, state: &NetworksState) {
         Span::raw("  "),
         Span::styled(" ⎋ cancel ", Style::default().fg(t.fg2).bg(t.hl)),
     ]));
-    let block = panel_block(theme, false, "New network", Some(String::from("net-define")));
+    let block = crate::ui::widgets::panel::block(
+        theme,
+        false,
+        "New network",
+        Some(crate::ui::widgets::panel::right("net-define", theme)),
+        None,
+        None,
+    );
     frame.render_widget(Paragraph::new(lines).block(block).style(theme.base()), modal);
 }

@@ -555,7 +555,7 @@ fn render_topbar(frame: &mut Frame, theme: &Theme, area: Rect, uri: &str, connec
 }
 
 fn panel_block(theme: &Theme, focused: bool, title: &str, right: Option<String>) -> Block<'static> {
-    crate::ui::widgets::panel::block(
+    crate::ui::widgets::panel::pane(
         theme,
         focused,
         title,
@@ -583,10 +583,10 @@ fn render_body(frame: &mut Frame, theme: &Theme, state: &HostState, area: Rect) 
         let rows = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(9),
                 Constraint::Length(8),
-                Constraint::Min(0),
                 Constraint::Length(7),
+                Constraint::Min(0),
+                Constraint::Length(6),
             ])
             .split(body);
         render_cpu(frame, theme, state, rows[0], false);
@@ -597,8 +597,8 @@ fn render_body(frame: &mut Frame, theme: &Theme, state: &HostState, area: Rect) 
     }
     let rows = Layout::default()
         .direction(Direction::Vertical)
-        // Row A is 13, not 12: 6 braille + per-thread + 3 meter + index + 2 borders.
-        .constraints([Constraint::Length(13), Constraint::Min(0), Constraint::Length(7)])
+        // Row A is 12: 6 braille + per-thread + 3 meter + index + 1 rule.
+        .constraints([Constraint::Length(12), Constraint::Min(0), Constraint::Length(6)])
         .split(body);
     let top = Layout::default()
         .direction(Direction::Horizontal)
@@ -607,6 +607,7 @@ fn render_body(frame: &mut Frame, theme: &Theme, state: &HostState, area: Rect) 
         .split(rows[0]);
     render_cpu(frame, theme, state, top[0], true);
     render_memory(frame, theme, state, top[1]);
+    crate::ui::widgets::panel::vseps(frame, theme, &top);
     render_domains(frame, theme, state, rows[1]);
     let bottom = Layout::default()
         .direction(Direction::Horizontal)
@@ -620,6 +621,7 @@ fn render_body(frame: &mut Frame, theme: &Theme, state: &HostState, area: Rect) 
     render_system(frame, theme, state, bottom[0]);
     render_pools(frame, theme, state, bottom[1]);
     render_networks(frame, theme, state, bottom[2]);
+    crate::ui::widgets::panel::vseps(frame, theme, &bottom);
 }
 
 fn render_cpu(frame: &mut Frame, theme: &Theme, state: &HostState, area: Rect, meters: bool) {
@@ -628,7 +630,7 @@ fn render_cpu(frame: &mut Frame, theme: &Theme, state: &HostState, area: Rect, m
         Some(h) => crate::metrics::store::padded(h, crate::metrics::store::window_len()),
         None => charts::series(5, 120, 0.38, 0.2, 0.08),
     };
-    let inner_w = (area.width.saturating_sub(4).max(10) - 5).max(10) as usize;
+    let inner_w = (area.width.saturating_sub(2).max(10) - 5).max(10) as usize;
     let rows = charts::area(theme.graphs, &data, inner_w.min(92), 6, BrailleMode::Fill);
     let colors = theme.chart_rows(&[t.red, t.magenta, t.blue, t.blue, t.cyan, t.teal]);
     let labels = ["100%", "", "", " 50%", "", "  0%"];
@@ -727,7 +729,7 @@ fn render_meters(theme: &Theme, state: &HostState, inner_w: usize, lines: &mut V
 
 fn render_memory(frame: &mut Frame, theme: &Theme, state: &HostState, area: Rect) {
     let t = &theme.tokens;
-    let inner_w = area.width.saturating_sub(4) as usize;
+    let inner_w = area.width.saturating_sub(2) as usize;
     let total: f64 = state.rss_by_domain.iter().map(|(_, v)| v).sum();
     let palette = [
         t.orange, t.blue, t.magenta, t.cyan, t.green, t.yellow, t.teal, t.red, t.fg2,

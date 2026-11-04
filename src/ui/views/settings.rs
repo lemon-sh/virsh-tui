@@ -296,7 +296,7 @@ fn render_topbar(frame: &mut Frame, theme: &Theme, area: Rect) {
 }
 
 fn panel_block(theme: &Theme, focused: bool, title: &str, right: Option<String>) -> Block<'static> {
-    crate::ui::widgets::panel::block(
+    crate::ui::widgets::panel::pane(
         theme,
         focused,
         title,
@@ -323,15 +323,17 @@ fn render_body(frame: &mut Frame, theme: &Theme, config: &Config, state: &Settin
             cols[1].height,
         );
         render_category(frame, theme, config, state, cat, rest);
+        crate::ui::widgets::panel::vseps(frame, theme, &[cols[0], rest]);
         return;
     }
     render_list(frame, theme, config, state, cols[1]);
     let right = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(12), Constraint::Min(0)])
+        .constraints([Constraint::Length(11), Constraint::Min(0)])
         .split(cols[2]);
     render_appearance(frame, theme, config, state, right[0]);
     render_preview(frame, theme, state, right[1]);
+    crate::ui::widgets::panel::vseps(frame, theme, &cols);
 }
 
 fn render_cats(frame: &mut Frame, theme: &Theme, state: &SettingsState, area: Rect) {
@@ -352,7 +354,7 @@ fn render_cats(frame: &mut Frame, theme: &Theme, state: &SettingsState, area: Re
             ])
         })
         .collect();
-    let block = panel_block(theme, false, "Settings", None);
+    let block = panel_block(theme, state.pane == SettingsPane::Categories, "Settings", None);
     frame.render_widget(Paragraph::new(lines).block(block).style(theme.base()), area);
 }
 
@@ -459,7 +461,7 @@ fn render_category(
     } else {
         None
     };
-    let block = crate::ui::widgets::panel::block(theme, focused, name, None, None, footer);
+    let block = crate::ui::widgets::panel::pane(theme, focused, name, None, None, footer);
     frame.render_widget(
         Paragraph::new(lines)
             .block(block)

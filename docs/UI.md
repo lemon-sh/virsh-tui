@@ -38,6 +38,18 @@ The application frame is divided vertically into three regions:
 
 ---
 
+## Pane Layout
+
+Views are built from borderless **panes** separated by rules rather than boxed panels (`ui::widgets::panel`):
+
+- `panel::pane` renders a top rule that carries the pane title (left) and right title/footers (right). The rule doubles as the separator from the pane above.
+- `panel::vseps` draws a vertical rule (with a tee into the top rules) in the 1-column gap between side-by-side panes.
+- **Focus**: the focused pane has a blue rule, a bold blue title and a leading `▌` marker; unfocused panes use the gutter colour and a dim title.
+- Modals and popups (Help, Palette, Wizard, Confirm, pickers, which-key) keep full boxes via `panel::block`.
+- The `borders` setting selects the rule glyph set (rounded/plain/double/thick).
+
+---
+
 ## Primary Views
 
 ### 1. Domains Dashboard (`ui::views::dashboard.rs`)

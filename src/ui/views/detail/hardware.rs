@@ -680,7 +680,7 @@ impl HardwareState {
 }
 
 fn panel_block(theme: &Theme, focused: bool, title: &str, right: Option<String>) -> Block<'static> {
-    crate::ui::widgets::panel::block(
+    crate::ui::widgets::panel::pane(
         theme,
         focused,
         title,
@@ -714,10 +714,11 @@ pub fn render(frame: &mut Frame, theme: &Theme, hw: &HardwareState, domain: &str
     render_editor(frame, theme, hw, insert, cols[1]);
     let right = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Min(0), Constraint::Length(12)])
+        .constraints([Constraint::Min(0), Constraint::Length(11)])
         .split(cols[2]);
     render_diff(frame, theme, hw, right[0]);
     render_will_run(frame, theme, hw, domain, right[1]);
+    crate::ui::widgets::panel::vseps(frame, theme, &cols);
     let _ = t;
 }
 
@@ -936,7 +937,7 @@ fn render_editor(frame: &mut Frame, theme: &Theme, hw: &HardwareState, insert: b
     } else {
         None
     };
-    let block = crate::ui::widgets::panel::block(theme, true, &dev.name, right, None, None);
+    let block = crate::ui::widgets::panel::pane(theme, true, &dev.name, right, None, None);
     frame.render_widget(Paragraph::new(lines).block(block).style(theme.base()), area);
 }
 
@@ -945,7 +946,7 @@ fn render_diff(frame: &mut Frame, theme: &Theme, hw: &HardwareState, area: Rect)
     let lines: Vec<Line> = hw
         .diff()
         .into_iter()
-        .take(area.height.saturating_sub(2) as usize)
+        .take(area.height.saturating_sub(1) as usize)
         .map(|l| {
             let (prefix, style) = match l.kind {
                 crate::xml::diff::DiffKind::Minus => ("", Style::default().fg(t.red).bg(t.bg)),

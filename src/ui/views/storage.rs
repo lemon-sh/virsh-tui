@@ -284,7 +284,7 @@ pub fn used_by(path: &str, attachments: &[(&str, &str)]) -> String {
 }
 
 fn panel_block(theme: &Theme, focused: bool, title: &str, right: Option<String>) -> Block<'static> {
-    crate::ui::widgets::panel::block(
+    crate::ui::widgets::panel::pane(
         theme,
         focused,
         title,
@@ -352,7 +352,7 @@ fn render_body(frame: &mut Frame, theme: &Theme, state: &StorageState, area: Rec
         // Compact: pools above volumes.
         let rows = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Length(12), Constraint::Min(0)])
+            .constraints([Constraint::Length(11), Constraint::Min(0)])
             .split(body);
         render_pools(frame, theme, state, rows[0]);
         render_volumes(frame, theme, state, rows[1]);
@@ -365,6 +365,7 @@ fn render_body(frame: &mut Frame, theme: &Theme, state: &StorageState, area: Rec
         .split(body);
     render_pools(frame, theme, state, cols[0]);
     render_volumes(frame, theme, state, cols[1]);
+    crate::ui::widgets::panel::vseps(frame, theme, &cols);
 }
 
 fn render_pools(frame: &mut Frame, theme: &Theme, state: &StorageState, area: Rect) {
@@ -541,7 +542,14 @@ fn render_picker(frame: &mut Frame, theme: &Theme, state: &StorageState, picker:
     );
     frame.render_widget(Clear, modal);
     let right = format!("{} › {} (cdrom, {})", picker.domain, picker.target, picker.bus);
-    let block = panel_block(theme, false, "◎ Insert media", Some(right));
+    let block = crate::ui::widgets::panel::block(
+        theme,
+        false,
+        "◎ Insert media",
+        Some(crate::ui::widgets::panel::right(right, theme)),
+        None,
+        None,
+    );
     let inner = Rect::new(modal.x + 2, modal.y + 1, modal.width - 4, modal.height - 2);
     let isos = state.picker_isos();
     let total = isos.len();

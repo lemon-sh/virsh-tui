@@ -491,7 +491,7 @@ fn render_topbar(frame: &mut Frame, theme: &Theme, area: Rect, uri: &str, connec
 }
 
 fn panel_block(theme: &Theme, focused: bool, title: &str, right: Option<&str>) -> Block<'static> {
-    crate::ui::widgets::panel::block(
+    crate::ui::widgets::panel::pane(
         theme,
         focused,
         title,
@@ -525,6 +525,7 @@ fn render_body(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: R
         .split(body);
     render_left(frame, theme, state, cols[0]);
     render_right(frame, theme, state, cols[1]);
+    crate::ui::widgets::panel::vseps(frame, theme, &cols);
 }
 
 /// Compact layout (100-152 terminal cols): domains table, one tabbed detail panel
@@ -535,22 +536,29 @@ fn render_compact(frame: &mut Frame, theme: &Theme, state: &DashboardState, area
         .constraints([
             Constraint::Min(8),
             Constraint::Length(11),
-            Constraint::Length(6),
             Constraint::Length(5),
+            Constraint::Length(4),
         ])
         .split(area);
     render_domains(frame, theme, state, rows[0]);
     const TABS: [&str; 5] = ["Overview", "CPU", "Mem", "Disk", "Net"];
     let running = state.selected().state == DomainState::Running;
+    // The tab strip takes the panel's last row.
+    let panel = Rect::new(
+        rows[1].x,
+        rows[1].y,
+        rows[1].width,
+        rows[1].height.saturating_sub(1),
+    );
     match state.detail_tab {
-        0 => render_overview(frame, theme, state, rows[1]),
-        _ if !running => render_not_running(frame, theme, state, rows[1]),
-        1 => render_cpu(frame, theme, state, rows[1]),
-        2 => render_memory(frame, theme, state, rows[1]),
-        3 => render_disk(frame, theme, state, rows[1]),
-        _ => render_network(frame, theme, state, rows[1]),
+        0 => render_overview(frame, theme, state, panel),
+        _ if !running => render_not_running(frame, theme, state, panel),
+        1 => render_cpu(frame, theme, state, panel),
+        2 => render_memory(frame, theme, state, panel),
+        3 => render_disk(frame, theme, state, panel),
+        _ => render_network(frame, theme, state, panel),
     }
-    // Tab strip on the panel's bottom border.
+    // Tab strip below the panel.
     let mut spans = vec![Span::styled(" ", theme.dim())];
     for (i, tab) in TABS.iter().enumerate() {
         let style = if i == state.detail_tab {
@@ -564,9 +572,9 @@ fn render_compact(frame: &mut Frame, theme: &Theme, state: &DashboardState, area
         spans.push(Span::styled(format!(" {tab} "), style));
     }
     let strip = Rect::new(
-        rows[1].x + 2,
+        rows[1].x + 1,
         rows[1].y + rows[1].height.saturating_sub(1),
-        rows[1].width.saturating_sub(4),
+        rows[1].width.saturating_sub(2),
         1,
     );
     frame.render_widget(Paragraph::new(Line::from(spans)), strip);
@@ -577,7 +585,7 @@ fn render_compact(frame: &mut Frame, theme: &Theme, state: &DashboardState, area
 fn render_left(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: Rect) {
     let rows = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Min(20), Constraint::Length(6), Constraint::Length(5)])
+        .constraints([Constraint::Min(20), Constraint::Length(5), Constraint::Length(4)])
         .split(area);
     render_domains(frame, theme, state, rows[0]);
     render_events(frame, theme, state, rows[1]);
@@ -673,7 +681,7 @@ fn render_domains(frame: &mut Frame, theme: &Theme, state: &DashboardState, area
         }
         chips.extend(group);
     }
-    let inner_w = area.width.saturating_sub(4) as usize;
+    let inner_w = area.width.saturating_sub(2) as usize;
     let chips_w: usize = chips.iter().map(|s| s.width()).sum();
     let pad = inner_w.saturating_sub(filter.width() + chips_w);
     let mut first = vec![filter, Span::raw(" ".repeat(pad))];
@@ -700,7 +708,7 @@ fn render_domains(frame: &mut Frame, theme: &Theme, state: &DashboardState, area
         "─".repeat(inner_w),
         Style::default().fg(t.hl).bg(t.bg),
     )));
-    let body_h = (area.height as usize).saturating_sub(2 + lines.len());
+    let body_h = (area.height as usize).saturating_sub(1 + lines.len());
     let start = scroll_offset(state.selection, visible.len(), body_h);
     for (i, r) in visible.iter().enumerate().skip(start).take(body_h) {
         let selected = i == state.selection;
@@ -787,7 +795,7 @@ fn render_domains(frame: &mut Frame, theme: &Theme, state: &DashboardState, area
         format!("{pos}/{} · {} marked", visible.len(), state.marks.len())
     };
     let footer_left = format!("sort: {}", state.sort.label());
-    let block = crate::ui::widgets::panel::block(
+    let block = crate::ui::widgets::panel::pane(
         theme,
         true,
         "Domains",
@@ -993,24 +1001,24 @@ fn render_right(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: 
         );
         return;
     }
-    // Overview: borders, five info rows, a blank line, then the action rows.
+    // Overview: rule, five info rows, a blank line, then the action rows.
     // The CPU graph gives up to two rows when the terminal is short, so the
     // chips keep their spacing.
     let chip_rows = action_chips(
         theme,
         state.selected().state,
-        area.width.saturating_sub(4) as usize,
+        area.width.saturating_sub(2) as usize,
     )
     .len();
-    let overview_h = (2 + 5 + 1 + chip_rows) as u16;
-    let cpu_h = area.height.saturating_sub(overview_h + 8 + 9).clamp(9, 11);
+    let overview_h = (1 + 5 + 1 + chip_rows) as u16;
+    let cpu_h = area.height.saturating_sub(overview_h + 7 + 8).clamp(8, 10);
     let rows = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(overview_h),
             Constraint::Length(cpu_h),
-            Constraint::Length(8),
-            Constraint::Min(9),
+            Constraint::Length(7),
+            Constraint::Min(8),
         ])
         .split(area);
     render_overview(frame, theme, state, rows[0]);
@@ -1032,6 +1040,7 @@ fn render_right(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: 
         .split(rows[2]);
     render_memory(frame, theme, state, mid[0]);
     render_disk(frame, theme, state, mid[1]);
+    crate::ui::widgets::panel::vseps(frame, theme, &mid);
     render_network(frame, theme, state, rows[3]);
 }
 
@@ -1214,13 +1223,13 @@ fn render_overview(frame: &mut Frame, theme: &Theme, state: &DashboardState, are
             ),
         ]));
     }
-    let chips = action_chips(theme, sel.state, area.width.saturating_sub(4) as usize);
+    let chips = action_chips(theme, sel.state, area.width.saturating_sub(2) as usize);
     // A blank line separates the info rows from the actions when it fits.
-    if (area.height as usize).saturating_sub(2 + lines.len()) > chips.len() {
+    if (area.height as usize).saturating_sub(1 + lines.len()) > chips.len() {
         lines.push(Line::from(""));
     }
     lines.extend(chips);
-    let block = crate::ui::widgets::panel::block(theme, false, &sel.name, Some(title_right), None, None);
+    let block = crate::ui::widgets::panel::pane(theme, false, &sel.name, Some(title_right), None, None);
     frame.render_widget(Paragraph::new(lines).block(block).style(theme.base()), area);
 }
 
@@ -1271,7 +1280,7 @@ fn selected_series(state: &DashboardState) -> Option<&crate::metrics::store::Dom
 
 fn render_cpu(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: Rect) {
     use crate::metrics::store::padded;
-    let width = (area.width.saturating_sub(4 + 5) as usize).clamp(10, 60);
+    let width = (area.width.saturating_sub(2 + 5) as usize).clamp(10, 60);
     let (data, right) = match selected_series(state) {
         Some(s) => {
             let v: Vec<f64> = s.cpu.values().iter().map(|x| f64::from(*x) / 100.0).collect();
@@ -1296,7 +1305,7 @@ fn render_cpu(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: Re
     };
     // The graph takes what the panel leaves after its borders and the time
     // axis (8 rows at the reference size, fewer on short terminals).
-    let graph_h = (area.height.saturating_sub(3) as usize).clamp(3, 8);
+    let graph_h = (area.height.saturating_sub(2) as usize).clamp(3, 8);
     let rows = charts::area(theme.graphs, &data, width, graph_h, BrailleMode::Fill);
     let t = &theme.tokens;
     let colors = theme.chart_rows(&[
@@ -1340,14 +1349,14 @@ fn render_cpu(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: Re
         Span::styled(pct.to_string(), theme.accent().add_modifier(Modifier::BOLD)),
         Span::styled(format!(" {rest}"), theme.dim()),
     ]);
-    let block = crate::ui::widgets::panel::block(theme, false, "CPU", Some(right_line), None, None);
+    let block = crate::ui::widgets::panel::pane(theme, false, "CPU", Some(right_line), None, None);
     frame.render_widget(Paragraph::new(lines).block(block).style(theme.base()), area);
 }
 
 fn render_memory(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: Rect) {
     use crate::metrics::store::{normalize, padded};
     let t = &theme.tokens;
-    let width = (area.width.saturating_sub(4) as usize).min(28);
+    let width = (area.width.saturating_sub(2) as usize).min(28);
     let gib = |kib: u64| kib as f64 / 1024.0 / 1024.0;
     let (frac, data, used, max, foot) = match selected_series(state) {
         Some(s) => {
@@ -1406,14 +1415,14 @@ fn render_memory(frame: &mut Frame, theme: &Theme, state: &DashboardState, area:
         Span::styled(used_txt, Style::default().fg(t.magenta)),
         Span::styled(max_txt, theme.dim()),
     ]);
-    let block = crate::ui::widgets::panel::block(theme, false, "Memory", Some(right), None, None);
+    let block = crate::ui::widgets::panel::pane(theme, false, "Memory", Some(right), None, None);
     frame.render_widget(Paragraph::new(lines).block(block).style(theme.base()), area);
 }
 
 fn render_disk(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: Rect) {
     use crate::metrics::store::{fmt_bytes_rate, normalize, padded};
     let t = &theme.tokens;
-    let width = (area.width.saturating_sub(4) as usize).min(28);
+    let width = (area.width.saturating_sub(2) as usize).min(28);
     let (rd, wr, rd_txt, wr_txt, title, iops) = match selected_series(state) {
         Some(s) => {
             // Read and write share one scale (min. full scale 1 MiB/s).
@@ -1487,7 +1496,7 @@ fn render_disk(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: R
 fn render_network(frame: &mut Frame, theme: &Theme, state: &DashboardState, area: Rect) {
     use crate::metrics::store::{fmt_bits_rate, fmt_bytes, normalize, padded};
     let t = &theme.tokens;
-    let width = (area.width.saturating_sub(4) as usize).min(64);
+    let width = (area.width.saturating_sub(2) as usize).min(64);
     let (rx, tx, rx_txt, tx_txt, title, foot) = match selected_series(state) {
         Some(s) => {
             // 1 Mb/s minimum full scale so idle links stay flat.
@@ -1557,7 +1566,7 @@ fn render_network(frame: &mut Frame, theme: &Theme, state: &DashboardState, area
         Span::styled("  ", theme.dim()),
         Span::styled(format!("↑ {tx_txt}"), Style::default().fg(t.yellow)),
     ]);
-    let block = crate::ui::widgets::panel::block(theme, false, &title, Some(right), None, None);
+    let block = crate::ui::widgets::panel::pane(theme, false, &title, Some(right), None, None);
     frame.render_widget(Paragraph::new(lines).block(block).style(theme.base()), area);
 }
 
