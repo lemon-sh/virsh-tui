@@ -1164,10 +1164,15 @@ impl App {
                         ev.selected = ev.selected.saturating_sub(10);
                         true
                     }
-                    A::CycleFocus => {
+                    A::PrevTab | A::NextTab => {
                         let all = ui::views::events::EventFilter::ALL;
                         let i = all.iter().position(|f| *f == ev.filter).unwrap_or(0);
-                        let next = (i + 1) % all.len();
+                        let len = all.len();
+                        let next = if resolved.action == A::NextTab {
+                            (i + 1) % len
+                        } else {
+                            (i + len - 1) % len
+                        };
 
                         ev.filter = all[next];
                         ev.selected = 0;

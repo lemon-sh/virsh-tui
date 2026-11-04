@@ -131,7 +131,7 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
                 ("gg / G", "top / bottom", false, &[A::GoTop, A::GoBottom]),
                 ("C-d / C-u", "half page", false, &[A::HalfDown, A::HalfUp]),
                 ("Tab", "cycle focus", false, &[A::CycleFocus]),
-                ("H / L", "prev / next tab", false, &[A::PrevTab, A::NextTab]),
+                ("h / l", "prev / next tab", false, &[A::PrevTab, A::NextTab]),
                 (
                     "1 … 5",
                     "switch view",
@@ -238,12 +238,6 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
             &[
                 ("t", "60s · 5m · 1h", false, &[A::WindowCycle]),
                 ("o", "cycle sort", false, &[A::SortCycle]),
-                (
-                    "f / F",
-                    "cycle filter chips",
-                    false,
-                    &[A::ChipCycle, A::ChipCycleBack],
-                ),
             ],
         ),
         sec(
@@ -281,6 +275,8 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
 pub struct HelpState {
     pub input: crate::input::textinput::TextInput,
     pub scroll: usize,
+    pub max_scroll: std::cell::Cell<usize>,
+    pub viewport_height: std::cell::Cell<usize>,
 }
 
 impl HelpState {
@@ -288,11 +284,27 @@ impl HelpState {
         Self {
             input: crate::input::textinput::TextInput::with(filter),
             scroll: 0,
+            max_scroll: std::cell::Cell::new(0),
+            viewport_height: std::cell::Cell::new(25),
         }
     }
 
     pub fn query(&self) -> &str {
         self.input.value()
+    }
+
+    pub fn scroll_up(&mut self, delta: usize) {
+        let max = self.max_scroll.get();
+        self.scroll = self.scroll.min(max).saturating_sub(delta);
+    }
+
+    pub fn scroll_down(&mut self, delta: usize) {
+        let max = self.max_scroll.get();
+        self.scroll = self.scroll.min(max).saturating_add(delta).min(max);
+    }
+
+    pub fn page_step(&self) -> usize {
+        (self.viewport_height.get() / 2).max(1)
     }
 }
 
@@ -416,6 +428,8 @@ pub fn render(frame: &mut Frame, theme: &Theme, state: &HelpState, map: &Keymap)
     // Scrollable list area
     let list_h = rows[0].height as usize;
     let max_scroll = lines.len().saturating_sub(list_h);
+    state.max_scroll.set(max_scroll);
+    state.viewport_height.set(list_h);
     let scroll = state.scroll.min(max_scroll);
     let visible_lines: Vec<Line> = lines.into_iter().skip(scroll).take(list_h).collect();
     frame.render_widget(Paragraph::new(visible_lines).style(theme.base()), rows[0]);

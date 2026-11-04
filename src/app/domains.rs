@@ -192,11 +192,7 @@ pub(super) async fn dispatch_action(
         A::HalfUp => dash.move_selection(-10),
         A::SortCycle => dash.cycle_sort(),
         A::ChipCycle => dash.cycle_chip(),
-        A::ChipCycleBack => {
-            for _ in 0..4 {
-                dash.cycle_chip();
-            }
-        }
+        A::ChipCycleBack => dash.cycle_chip_back(),
         A::Mark => dash.toggle_mark(),
         A::Visual => {
             dash.toggle_visual();

@@ -153,19 +153,21 @@ pub(super) fn handle_help_key(key: KeyEvent, help_state: &mut Option<ui::overlay
             true
         }
         KeyCode::Up | KeyCode::Char('k') | KeyCode::Char('p') if ctrl || key.code == KeyCode::Up => {
-            st.scroll = st.scroll.saturating_sub(1);
+            st.scroll_up(1);
             true
         }
         KeyCode::Down | KeyCode::Char('j') | KeyCode::Char('n') if ctrl || key.code == KeyCode::Down => {
-            st.scroll = st.scroll.saturating_add(1);
+            st.scroll_down(1);
             true
         }
         KeyCode::PageUp | KeyCode::Char('u') if ctrl || key.code == KeyCode::PageUp => {
-            st.scroll = st.scroll.saturating_sub(10);
+            let step = st.page_step();
+            st.scroll_up(step);
             true
         }
         KeyCode::PageDown | KeyCode::Char('d') if ctrl || key.code == KeyCode::PageDown => {
-            st.scroll = st.scroll.saturating_add(10);
+            let step = st.page_step();
+            st.scroll_down(step);
             true
         }
         KeyCode::Left => {

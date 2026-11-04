@@ -19,7 +19,7 @@ key map, so it reflects your `keymap.toml`. Type to filter it.
 | `Backspace`, `q` | back (`q` quits from the top level) | `back` |
 | `/` | filter | `filter` |
 | `n` / `N` | next / previous match | `next_match` / `prev_match` |
-| `H` / `L`, `[` / `]` | previous / next tab | `prev_tab` / `next_tab` |
+| `h` / `l`, `H` / `L`, `[` / `]` | previous / next tab | `prev_tab` / `next_tab` |
 | `1` … `5` | Domains, Host, Networks, Storage, Events | `view_domains` … `view_events` |
 
 ### Domain actions
@@ -71,7 +71,6 @@ key map, so it reflects your `keymap.toml`. Type to filter it.
 | `m` | mark / unmark | `mark` |
 | `V` | visual selection | `visual` |
 | `o` | cycle sort | `sort_cycle` |
-| `f` / `F` | cycle filter chips | `chip_cycle` / `chip_cycle_back` |
 | `t` | history window 60 s / 5 min / 1 h | `window_cycle` |
 | `Tab` | cycle panel focus (Networks, Storage) | `cycle_focus` |
 | `u` | undo field (hardware editor) | `undo_field` |

@@ -339,6 +339,18 @@ impl DashboardState {
         self.selection = 0;
     }
 
+    /// Cycle state chip backward.
+    pub fn cycle_chip_back(&mut self) {
+        self.chip = match self.chip {
+            Chip::All => Chip::Off,
+            Chip::Off => Chip::Crashed,
+            Chip::Crashed => Chip::Paused,
+            Chip::Paused => Chip::Running,
+            Chip::Running => Chip::All,
+        };
+        self.selection = 0;
+    }
+
     /// Cycle sort column.
     pub fn cycle_sort(&mut self) {
         let selected = self.selected().name.clone();
