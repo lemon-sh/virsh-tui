@@ -101,18 +101,64 @@ fn live_label(map: &Keymap, actions: &[A]) -> Option<String> {
     Some(parts.join(" / "))
 }
 
-fn sec(map: &Keymap, title: &str, color: &'static str, rows: &[(&str, &str, bool, &[A])]) -> Section {
+/// Definition of a row in the help overlay.
+#[derive(Debug, Clone, Copy)]
+pub enum RowDef {
+    /// Action-backed row: the key labels are derived 100% dynamically from `Keymap`.
+    Action {
+        actions: &'static [A],
+        desc: &'static str,
+        critical: bool,
+    },
+    /// Static informative row (e.g. ex commands, mode indicators) with no KeyAction binding.
+    Static {
+        key: &'static str,
+        desc: &'static str,
+        critical: bool,
+    },
+}
+
+const fn act(actions: &'static [A], desc: &'static str) -> RowDef {
+    RowDef::Action {
+        actions,
+        desc,
+        critical: false,
+    }
+}
+
+const fn act_crit(actions: &'static [A], desc: &'static str) -> RowDef {
+    RowDef::Action {
+        actions,
+        desc,
+        critical: true,
+    }
+}
+
+const fn info(key: &'static str, desc: &'static str) -> RowDef {
+    RowDef::Static {
+        key,
+        desc,
+        critical: false,
+    }
+}
+
+fn sec(map: &Keymap, title: &str, color: &'static str, rows: &[RowDef]) -> Section {
     Section {
         title: title.to_string(),
         color,
         rows: rows
             .iter()
-            .map(|(k, d, c, acts)| {
-                (
-                    live_label(map, acts).unwrap_or_else(|| k.to_string()),
-                    d.to_string(),
-                    *c,
-                )
+            .map(|row| match row {
+                RowDef::Action {
+                    actions,
+                    desc,
+                    critical,
+                } => (
+                    live_label(map, actions).unwrap_or_else(|| String::from("—")),
+                    desc.to_string(),
+                    *critical,
+                ),
+                RowDef::Static { key, desc, critical } => (key.to_string(), desc.to_string(), *critical),
             })
             .collect(),
     }
@@ -127,15 +173,12 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
             "Navigation",
             "blue",
             &[
-                ("j / k", "down / up", false, &[A::MoveDown, A::MoveUp]),
-                ("gg / G", "top / bottom", false, &[A::GoTop, A::GoBottom]),
-                ("C-d / C-u", "half page", false, &[A::HalfDown, A::HalfUp]),
-                ("Tab", "cycle focus", false, &[A::CycleFocus]),
-                ("h / l", "prev / next tab", false, &[A::PrevTab, A::NextTab]),
-                (
-                    "1 … 5",
-                    "switch view",
-                    false,
+                act(&[A::MoveDown, A::MoveUp], "down / up"),
+                act(&[A::GoTop, A::GoBottom], "top / bottom"),
+                act(&[A::HalfDown, A::HalfUp], "half page"),
+                act(&[A::CycleFocus], "cycle focus"),
+                act(&[A::PrevTab, A::NextTab], "prev / next tab"),
+                act(
                     &[
                         A::ViewDomains,
                         A::ViewHost,
@@ -143,11 +186,12 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
                         A::ViewStorage,
                         A::ViewEvents,
                     ],
+                    "switch view",
                 ),
-                ("⏎", "open", false, &[A::Open]),
-                ("⌫ / q", "back", false, &[A::Back]),
-                ("/", "filter", false, &[A::Filter]),
-                ("n / N", "next / prev match", false, &[A::NextMatch, A::PrevMatch]),
+                act(&[A::Open], "open"),
+                act(&[A::Back], "back"),
+                act(&[A::Filter], "filter"),
+                act(&[A::NextMatch, A::PrevMatch], "next / prev match"),
             ],
         ),
         sec(
@@ -155,13 +199,13 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
             "Modes",
             "green",
             &[
-                ("i / a", "edit field (INSERT)", false, &[]),
-                ("⎋", "back to NORMAL", false, &[]),
-                ("V", "visual select", false, &[A::Visual]),
-                ("m", "mark / unmark", false, &[A::Mark]),
-                (":", "ex command", false, &[A::Ex]),
-                (": ⇥", "complete in : line", false, &[]),
-                ("C-p", "command palette", false, &[A::Palette]),
+                act(&[A::EditField], "edit field (INSERT)"),
+                info("⎋", "back to NORMAL"),
+                act(&[A::Visual], "visual select"),
+                act(&[A::Mark], "mark / unmark"),
+                act(&[A::Ex], "ex command"),
+                info(": ⇥", "complete in : line"),
+                act(&[A::Palette], "command palette"),
             ],
         ),
         sec(
@@ -169,18 +213,18 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
             "Domain",
             "magenta",
             &[
-                ("s", "start", false, &[A::Start]),
-                ("S", "shutdown (ACPI)", false, &[A::Shutdown]),
-                ("D", "destroy (force off)", true, &[A::Destroy]),
-                ("r", "reboot", false, &[A::Reboot]),
-                ("R", "reset", true, &[A::Reset]),
-                ("p", "pause / resume", false, &[A::Pause]),
-                ("Z", "suspend to disk", false, &[A::ManagedSave]),
-                ("a", "toggle autostart", false, &[A::Autostart]),
-                ("c", "serial console", false, &[A::Console]),
-                ("v", "graphical viewer", false, &[A::Viewer]),
-                ("e", "edit XML ($EDITOR)", false, &[A::EditXml]),
-                ("X", "undefine", true, &[A::Undefine]),
+                act(&[A::Start], "start"),
+                act(&[A::Shutdown], "shutdown (ACPI)"),
+                act_crit(&[A::Destroy], "destroy (force off)"),
+                act(&[A::Reboot], "reboot"),
+                act_crit(&[A::Reset], "reset"),
+                act(&[A::Pause], "pause / resume"),
+                act(&[A::ManagedSave], "suspend to disk"),
+                act(&[A::Autostart], "toggle autostart"),
+                act(&[A::Console], "serial console"),
+                act(&[A::Viewer], "graphical viewer"),
+                act(&[A::EditXml], "edit XML ($EDITOR)"),
+                act_crit(&[A::Undefine], "undefine"),
             ],
         ),
         sec(
@@ -188,10 +232,10 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
             "Yank",
             "cyan",
             &[
-                ("yy", "name", false, &[A::YankName]),
-                ("yu", "uuid", false, &[A::YankUuid]),
-                ("yi", "ip address", false, &[A::YankIp]),
-                ("yc", "last virsh command", false, &[A::YankCmd]),
+                act(&[A::YankName], "name"),
+                act(&[A::YankUuid], "uuid"),
+                act(&[A::YankIp], "ip address"),
+                act(&[A::YankCmd], "last virsh command"),
             ],
         ),
         sec(
@@ -199,36 +243,19 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
             &leader_title(map),
             "orange",
             &[
-                ("␣n", "new domain", false, &[A::NewDomain]),
-                ("␣c", "clone", false, &[A::Clone]),
-                ("␣r", "rename", false, &[A::Rename]),
-                ("␣M", "migrate", false, &[A::Migrate]),
-                (
-                    "␣s c/r/d",
-                    "snapshot new/revert/del",
-                    false,
+                act(&[A::NewDomain], "new domain"),
+                act(&[A::Clone], "clone"),
+                act(&[A::Rename], "rename"),
+                act(&[A::Migrate], "migrate"),
+                act(
                     &[A::SnapshotNew, A::SnapshotRevert, A::SnapshotDelete],
+                    "snapshot new/revert/del",
                 ),
-                (
-                    "␣mi / ␣me",
-                    "insert / eject ISO",
-                    false,
-                    &[A::InsertMedia, A::EjectMedia],
-                ),
-                (
-                    "␣da / ␣dr",
-                    "disk attach / resize",
-                    false,
-                    &[A::DiskAttach, A::DiskResize],
-                ),
-                (
-                    "␣ia / ␣il",
-                    "NIC attach / link",
-                    false,
-                    &[A::NicAttach, A::NicLink],
-                ),
-                ("␣x", "export XML", false, &[A::ExportXml]),
-                ("␣b", "boot order", false, &[A::BootOrder]),
+                act(&[A::InsertMedia, A::EjectMedia], "insert / eject ISO"),
+                act(&[A::DiskAttach, A::DiskResize], "disk attach / resize"),
+                act(&[A::NicAttach, A::NicLink], "NIC attach / link"),
+                act(&[A::ExportXml], "export XML"),
+                act(&[A::BootOrder], "boot order"),
             ],
         ),
         sec(
@@ -236,8 +263,8 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
             "Monitor",
             "teal",
             &[
-                ("t", "60s · 5m · 1h", false, &[A::WindowCycle]),
-                ("o", "cycle sort", false, &[A::SortCycle]),
+                act(&[A::WindowCycle], "60s · 5m · 1h"),
+                act(&[A::SortCycle], "cycle sort"),
             ],
         ),
         sec(
@@ -245,14 +272,14 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
             "Ex commands",
             "yellow",
             &[
-                (":start", "arch-dev", false, &[]),
-                (":setmem", "arch-dev 8G --live", false, &[]),
-                (":attach-iso", "arch-dev ~/iso/…", false, &[]),
-                (":connect", "qemu+ssh://h/system", false, &[]),
-                (":theme", "tokyo-night", false, &[]),
-                (":sort", "cpu | mem | name", false, &[]),
-                (":w / :q", "apply / close", false, &[]),
-                (":!virsh", "raw passthrough", false, &[]),
+                info(":start", "arch-dev"),
+                info(":setmem", "arch-dev 8G --live"),
+                info(":attach-iso", "arch-dev ~/iso/…"),
+                info(":connect", "qemu+ssh://h/system"),
+                info(":theme", "tokyo-night"),
+                info(":sort", "cpu | mem | name"),
+                info(":w / :q", "apply / close"),
+                info(":!virsh", "raw passthrough"),
             ],
         ),
         sec(
@@ -260,11 +287,11 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
             "App",
             "blue",
             &[
-                ("?", "this help", false, &[A::Help]),
-                (",", "settings", false, &[A::Settings]),
-                ("C-r", "force refresh", false, &[A::Refresh]),
-                ("C-l", "redraw", false, &[A::Redraw]),
-                ("ZZ / :qa", "quit", false, &[]),
+                act(&[A::Help], "this help"),
+                act(&[A::Settings], "settings"),
+                act(&[A::Refresh], "force refresh"),
+                act(&[A::Redraw], "redraw"),
+                info("ZZ / :qa", "quit"),
             ],
         ),
     ]

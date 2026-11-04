@@ -1045,16 +1045,8 @@ impl App {
         {
             return false;
         }
-        // Hardware tab keys bypass the engine (INSERT raw editing, J/K, Tab…).
-        if self.view == View::Detail
-            && handle_hardware_key(
-                key,
-                &mut self.detail,
-                &mut self.confirm,
-                &mut self.ex_line,
-                &mut self.engine,
-            )
-        {
+        // Hardware tab keys bypass the engine only in INSERT mode (raw editing, Esc).
+        if self.view == View::Detail && handle_hardware_key(key, &mut self.detail, &mut self.engine) {
             return false;
         }
         if key.code == KeyCode::Esc && self.dash.visual_anchor.is_some() {
@@ -1429,6 +1421,8 @@ impl App {
                     resolved.action,
                     &mut self.detail,
                     &mut self.view,
+                    &mut self.confirm,
+                    &mut self.ex_line,
                     &self.uri,
                     self.dry_run,
                     self.demo,

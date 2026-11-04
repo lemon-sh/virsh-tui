@@ -72,8 +72,11 @@ key map, so it reflects your `keymap.toml`. Type to filter it.
 | `V` | visual selection | `visual` |
 | `o` | cycle sort | `sort_cycle` |
 | `t` | history window 60 s / 5 min / 1 h | `window_cycle` |
-| `Tab` | cycle panel focus (Networks, Storage) | `cycle_focus` |
+| `Tab` / `Shift-Tab` | cycle panel focus (Networks, Storage, Hardware) | `cycle_focus` / `cycle_focus_prev` |
+| `i` | edit field (hardware editor) | `edit_field` |
 | `u` | undo field (hardware editor) | `undo_field` |
+| `d` | detach device (hardware editor) | `device_detach` |
+| `J` / `K` | boot order down / up (hardware editor) | `boot_order` / `boot_order_prev` |
 | `gx` | go to the XML tab | `goto_xml` |
 
 ### App

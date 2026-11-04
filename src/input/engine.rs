@@ -78,6 +78,10 @@ pub enum KeyAction {
     NicAttach,
     NicLink,
     BootOrder,
+    BootOrderPrev,
+    EditField,
+    DeviceDetach,
+    CycleFocusPrev,
     ConfirmYes,
     ConfirmNo,
     PrevTab,
@@ -156,6 +160,10 @@ impl KeyAction {
         (Self::NicAttach, "nic_attach"),
         (Self::NicLink, "nic_link"),
         (Self::BootOrder, "boot_order"),
+        (Self::BootOrderPrev, "boot_order_prev"),
+        (Self::EditField, "edit_field"),
+        (Self::DeviceDetach, "device_detach"),
+        (Self::CycleFocusPrev, "cycle_focus_prev"),
         (Self::ConfirmYes, "confirm_yes"),
         (Self::ConfirmNo, "confirm_no"),
         (Self::PrevTab, "prev_tab"),
@@ -271,6 +279,10 @@ impl KeyAction {
             Self::NicAttach => "NIC attach",
             Self::NicLink => "NIC link",
             Self::BootOrder => "boot order",
+            Self::BootOrderPrev => "boot order up",
+            Self::EditField => "edit field (INSERT)",
+            Self::DeviceDetach => "detach device",
+            Self::CycleFocusPrev => "cycle focus backwards",
             Self::ConfirmYes => "confirm yes",
             Self::ConfirmNo => "confirm no",
             Self::PrevTab => "prev tab",
@@ -290,7 +302,7 @@ impl KeyAction {
     pub fn is_destructive(self) -> bool {
         matches!(
             self,
-            Self::Destroy | Self::Reset | Self::Undefine | Self::SnapshotDelete
+            Self::Destroy | Self::Reset | Self::Undefine | Self::SnapshotDelete | Self::DeviceDetach
         )
     }
 }

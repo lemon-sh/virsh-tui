@@ -4,146 +4,71 @@
 
 use super::*;
 
-/// Hardware-tab keys (NORMAL + INSERT). Returns true when consumed.
+/// Hardware-tab keys in INSERT mode (raw editing, bypass the engine, except Esc).
+/// Returns true when consumed.
 pub(super) fn handle_hardware_key(
     key: KeyEvent,
     detail: &mut Option<ui::views::detail::DetailState>,
-    confirm: &mut Option<crate::command::plan::PendingConfirm>,
-    ex_line: &mut Option<crate::input::textinput::TextInput>,
     engine: &mut crate::input::engine::KeyEngine,
 ) -> bool {
     use crate::input::key::KeySeq;
     let Some(d) = detail else { return false };
-    if d.tab != crate::ui::views::detail::DetailTab::Hardware {
+    if d.tab != crate::ui::views::detail::DetailTab::Hardware || !d.hw_insert {
         return false;
     }
     // INSERT mode: raw editing, bypass the engine (except Esc).
-    if d.hw_insert {
-        if key.code == KeyCode::Esc {
-            d.hw_insert = false;
-            d.message.clear();
-            engine.feed(&KeySeq::parse("Esc"));
-            return true;
-        }
-        let dev_id = d.hw.selected_device().id.to_string();
-        match key.code {
-            KeyCode::Enter | KeyCode::Tab => {
-                if let Some(form) = d.hw.forms.get_mut(dev_id.as_str()) {
-                    form.move_focus(1);
-                }
-                return true;
-            }
-            KeyCode::BackTab => {
-                if let Some(form) = d.hw.forms.get_mut(dev_id.as_str()) {
-                    form.move_focus(-1);
-                }
-                return true;
-            }
-            KeyCode::Backspace => {
-                edit_focused(&mut d.hw, &dev_id, EditOp::Pop);
-                return true;
-            }
-            KeyCode::Char(c) if key.modifiers.contains(KeyModifiers::CONTROL) && (c == 'a' || c == 'x') => {
-                edit_focused(&mut d.hw, &dev_id, EditOp::Adjust(if c == 'a' { 1 } else { -1 }));
-                return true;
-            }
-            KeyCode::Char(c) if key.modifiers.is_empty() => {
-                let is_number =
-                    d.hw.forms
-                        .get(dev_id.as_str())
-                        .and_then(|f| f.fields.get(f.focus))
-                        .is_some_and(|f| {
-                            matches!(
-                                f.kind,
-                                crate::ui::widgets::form::FieldKind::Number { .. }
-                                    | crate::ui::widgets::form::FieldKind::Size
-                            )
-                        });
-                if is_number && matches!(c, 'h' | 'l' | 'H' | 'L') {
-                    let delta = match c {
-                        'h' => -1,
-                        'l' => 1,
-                        'H' => -10,
-                        'L' => 10,
-                        _ => 0,
-                    };
-                    edit_focused(&mut d.hw, &dev_id, EditOp::Adjust(delta));
-                } else {
-                    edit_focused(&mut d.hw, &dev_id, EditOp::Push(c));
-                }
-                return true;
-            }
-            _ => return false,
-        }
+    if key.code == KeyCode::Esc {
+        d.hw_insert = false;
+        d.message.clear();
+        engine.feed(&KeySeq::parse("Esc"));
+        return true;
     }
-    // NORMAL mode hardware keys.
-    let tok = KeySeq::from_event(&key);
-    match tok.token() {
-        "j" => {
-            d.hw.selected = (d.hw.selected + 1).min(d.hw.devices.len() - 1);
-            true
-        }
-        "k" => {
-            d.hw.selected = d.hw.selected.saturating_sub(1);
-            true
-        }
-        "i" => {
-            d.hw_insert = true;
-            d.message = String::from("-- INSERT --");
-            true
-        }
-        "a" => {
-            let dev = d.hw.selected_device().id.to_string();
-            let prefix = if dev.starts_with("disk") {
-                "attach-disk <src> <target>"
-            } else if dev.starts_with("nic") {
-                "attach-nic <source> <model>"
-            } else {
-                "attach-hostdev "
-            };
-            *ex_line = Some(crate::input::textinput::TextInput::with(prefix));
-            true
-        }
-        "d" => {
-            stage_detach(d, confirm);
-            true
-        }
-        "J" => {
-            boot_reorder(d, 1);
-            true
-        }
-        "K" => {
-            boot_reorder(d, -1);
-            true
-        }
-        "Tab" => {
-            let dev = d.hw.selected_device().id.to_string();
-            if let Some(form) = d.hw.forms.get_mut(dev.as_str()) {
+    let dev_id = d.hw.selected_device().id.to_string();
+    match key.code {
+        KeyCode::Enter | KeyCode::Tab => {
+            if let Some(form) = d.hw.forms.get_mut(dev_id.as_str()) {
                 form.move_focus(1);
             }
             true
         }
-        "S-Tab" => {
-            let dev = d.hw.selected_device().id.to_string();
-            if let Some(form) = d.hw.forms.get_mut(dev.as_str()) {
+        KeyCode::BackTab => {
+            if let Some(form) = d.hw.forms.get_mut(dev_id.as_str()) {
                 form.move_focus(-1);
             }
             true
         }
-        "u" => {
-            let dev = d.hw.selected_device().id.to_string();
-            undo_focused(d, &dev);
+        KeyCode::Backspace => {
+            edit_focused(&mut d.hw, &dev_id, EditOp::Pop);
             true
         }
-        "y" => {
-            let text =
-                d.hw.will_run(&d.domain)
-                    .iter()
-                    .flat_map(|p| p.steps.iter().map(crate::command::display::display))
-                    .collect::<Vec<_>>()
-                    .join("\n");
-            copy_text(&text);
-            d.message = String::from("copied will-run commands");
+        KeyCode::Char(c) if key.modifiers.contains(KeyModifiers::CONTROL) && (c == 'a' || c == 'x') => {
+            edit_focused(&mut d.hw, &dev_id, EditOp::Adjust(if c == 'a' { 1 } else { -1 }));
+            true
+        }
+        KeyCode::Char(c) if key.modifiers.is_empty() => {
+            let is_number =
+                d.hw.forms
+                    .get(dev_id.as_str())
+                    .and_then(|f| f.fields.get(f.focus))
+                    .is_some_and(|f| {
+                        matches!(
+                            f.kind,
+                            crate::ui::widgets::form::FieldKind::Number { .. }
+                                | crate::ui::widgets::form::FieldKind::Size
+                        )
+                    });
+            if is_number && matches!(c, 'h' | 'l' | 'H' | 'L') {
+                let delta = match c {
+                    'h' => -1,
+                    'l' => 1,
+                    'H' => -10,
+                    'L' => 10,
+                    _ => 0,
+                };
+                edit_focused(&mut d.hw, &dev_id, EditOp::Adjust(delta));
+            } else {
+                edit_focused(&mut d.hw, &dev_id, EditOp::Push(c));
+            }
             true
         }
         _ => false,
@@ -490,6 +415,8 @@ pub(super) async fn dispatch_detail(
     action: crate::input::engine::KeyAction,
     detail: &mut Option<ui::views::detail::DetailState>,
     view: &mut View,
+    confirm: &mut Option<crate::command::plan::PendingConfirm>,
+    ex_line: &mut Option<crate::input::textinput::TextInput>,
     uri: &str,
     dry_run: bool,
     demo: bool,
@@ -497,6 +424,86 @@ pub(super) async fn dispatch_detail(
     use crate::input::engine::KeyAction as A;
     use crate::ui::views::detail::{DetailTab, SnapModal};
     let Some(d) = detail else { return false };
+    if d.tab == DetailTab::Hardware && !d.hw_insert {
+        match action {
+            A::MoveDown => {
+                d.hw.selected = (d.hw.selected + 1).min(d.hw.devices.len().saturating_sub(1));
+                return false;
+            }
+            A::MoveUp => {
+                d.hw.selected = d.hw.selected.saturating_sub(1);
+                return false;
+            }
+            A::GoTop => {
+                d.hw.selected = 0;
+                return false;
+            }
+            A::GoBottom => {
+                d.hw.selected = d.hw.devices.len().saturating_sub(1);
+                return false;
+            }
+            A::CycleFocus => {
+                let dev = d.hw.selected_device().id.to_string();
+                if let Some(form) = d.hw.forms.get_mut(dev.as_str()) {
+                    form.move_focus(1);
+                }
+                return false;
+            }
+            A::CycleFocusPrev => {
+                let dev = d.hw.selected_device().id.to_string();
+                if let Some(form) = d.hw.forms.get_mut(dev.as_str()) {
+                    form.move_focus(-1);
+                }
+                return false;
+            }
+            A::EditField | A::Open => {
+                d.hw_insert = true;
+                d.message = String::from("-- INSERT --");
+                return false;
+            }
+            A::UndoField => {
+                let dev = d.hw.selected_device().id.to_string();
+                undo_focused(d, &dev);
+                return false;
+            }
+            A::DeviceDetach => {
+                stage_detach(d, confirm);
+                return false;
+            }
+            A::BootOrder => {
+                boot_reorder(d, 1);
+                return false;
+            }
+            A::BootOrderPrev => {
+                boot_reorder(d, -1);
+                return false;
+            }
+            A::YankCmd => {
+                let text =
+                    d.hw.will_run(&d.domain)
+                        .iter()
+                        .flat_map(|p| p.steps.iter().map(crate::command::display::display))
+                        .collect::<Vec<_>>()
+                        .join("\n");
+                copy_text(&text);
+                d.message = String::from("copied will-run commands");
+                return false;
+            }
+            A::Autostart => {
+                let dev = d.hw.selected_device().id.to_string();
+                let prefix = if dev.starts_with("disk") {
+                    "attach-disk <src> <target>"
+                } else if dev.starts_with("nic") {
+                    "attach-nic <source> <model>"
+                } else {
+                    "attach-hostdev "
+                };
+                *ex_line = Some(crate::input::textinput::TextInput::with(prefix));
+                return false;
+            }
+            _ => {}
+        }
+    }
     if d.tab == DetailTab::Snapshots && d.snap_modal == SnapModal::None {
         match action {
             A::MoveDown => {
@@ -557,15 +564,6 @@ pub(super) async fn dispatch_detail(
         A::NextTab => d.next_tab(),
         A::PrevTab => d.prev_tab(),
         A::GotoXml => d.tab = ui::views::detail::DetailTab::Xml,
-        A::UndoField if d.tab == ui::views::detail::DetailTab::Hardware && !d.hw_insert => {
-            let dev = d.hw.selected_device().id.to_string();
-            if let Some(form) = d.hw.forms.get(dev.as_str())
-                && let Some(field) = form.fields.get(form.focus)
-            {
-                let id = field.id.clone();
-                d.hw.undo_field(&dev, &id);
-            }
-        }
         A::EditXml if d.tab == ui::views::detail::DetailTab::Xml => {
             d.message = edit_domain_xml(uri, &d.domain, &d.xml, dry_run, demo).await;
             if !demo {

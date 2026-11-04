@@ -310,7 +310,7 @@ pub(super) async fn dispatch_storage(
                 store.vol_selected = store.vol_selected.saturating_sub(1);
             }
         }
-        A::CycleFocus => {
+        A::CycleFocus | A::CycleFocusPrev => {
             store.focus_pools = !store.focus_pools;
         }
         A::Open => {
