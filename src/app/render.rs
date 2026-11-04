@@ -164,7 +164,12 @@ pub(super) fn dump_frame(
             "help" => {
                 ui::views::dashboard::render(f, theme, dash);
                 ui::widgets::modal::dim_background(f, theme);
-                ui::overlays::help::render(f, theme, "", &crate::input::keymap::default_map());
+                ui::overlays::help::render(
+                    f,
+                    theme,
+                    &ui::overlays::help::HelpState::default(),
+                    &crate::input::keymap::default_map(),
+                );
             }
             _ => ui::views::dashboard::render(f, theme, dash),
         }

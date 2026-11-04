@@ -86,7 +86,7 @@ Provides hypervisor-level resource monitoring:
 
 ## Overlays & Modals
 
-- **Help Overlay (`ui::overlays::help.rs`)**: Opened with `?`. Displays a comprehensive multi-column list of all available key bindings. Dynamically reflects any custom key remappings defined in `keymap.toml`.
+- **Help Overlay (`ui::overlays::help.rs`)**: Opened with `?`. Displays a categorized single-column list of all available key bindings with an interactive bottom fuzzy search input (like fzf) and keyboard navigation. Dynamically reflects any custom key remappings defined in `keymap.toml`.
 - **Command Palette (`ui::overlays::palette.rs`)**: Opened with `Ctrl-p`. Provides a fuzzy-searchable list of all virsh-tui actions and virsh commands using the `nucleo-matcher` engine. Displays assigned shortcut badges.
 - **New Domain Wizard (`ui::overlays::wizard.rs`)**: Opened with `Space n`. A 6-step guided modal to configure and launch a new virtual machine:
   1. Operating System & Source (ISO, URL, existing disk).

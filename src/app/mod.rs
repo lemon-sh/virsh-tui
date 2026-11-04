@@ -177,7 +177,7 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
     let wizard: Option<ui::overlays::wizard::WizardState> = None;
     let settings: Option<ui::views::settings::SettingsState> = None;
     let palette: Option<ui::overlays::palette::PaletteState> = None;
-    let help_filter: Option<String> = None;
+    let help_state: Option<ui::overlays::help::HelpState> = None;
     let events_rx = if cli.demo || !dash.connected {
         None
     } else {
@@ -262,7 +262,7 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
         wizard,
         settings,
         palette,
-        help_filter,
+        help_state,
         events_rx,
         view,
         pending_quit_z,
@@ -356,7 +356,7 @@ struct App {
     wizard: Option<ui::overlays::wizard::WizardState>,
     settings: Option<ui::views::settings::SettingsState>,
     palette: Option<ui::overlays::palette::PaletteState>,
-    help_filter: Option<String>,
+    help_state: Option<ui::overlays::help::HelpState>,
     events_rx: Option<tokio::sync::mpsc::Receiver<crate::model::LibvirtEvent>>,
     view: View,
     pending_quit_z: bool,
@@ -599,7 +599,7 @@ impl App {
             if self.confirm.is_some()
                 || self.wizard.is_some()
                 || self.palette.is_some()
-                || self.help_filter.is_some()
+                || self.help_state.is_some()
             {
                 crate::ui::widgets::modal::dim_background(f, &self.theme);
             }
@@ -625,8 +625,8 @@ impl App {
             if let Some(st) = &self.settings {
                 crate::ui::views::settings::render(f, &self.theme, &self.config, st);
             }
-            if let Some(filter) = &self.help_filter {
-                crate::ui::overlays::help::render(f, &self.theme, filter, self.engine.map());
+            if let Some(help) = &self.help_state {
+                crate::ui::overlays::help::render(f, &self.theme, help, self.engine.map());
             }
         }
         crate::ui::widgets::modal::apply_transparency(f, &self.theme);
@@ -934,7 +934,7 @@ impl App {
                             &mut self.messages,
                             self.dry_run,
                             self.demo,
-                            &mut self.help_filter,
+                            &mut self.help_state,
                             &mut self.config,
                             &mut self.theme,
                             &mut self.confirm,
@@ -989,7 +989,7 @@ impl App {
         {
             return false;
         }
-        if self.help_filter.is_some() && handle_help_key(key, &mut self.help_filter) {
+        if self.help_state.is_some() && handle_help_key(key, &mut self.help_state) {
             return false;
         }
         // Settings captures navigation while open.
@@ -1282,7 +1282,7 @@ impl App {
                     continue;
                 }
                 (_, A::Help) => {
-                    self.help_filter = Some(String::new());
+                    self.help_state = Some(ui::overlays::help::HelpState::default());
                     continue;
                 }
                 (_, A::Settings) => {

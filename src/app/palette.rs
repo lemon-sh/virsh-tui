@@ -139,25 +139,74 @@ pub(super) async fn run_palette_enter(
     }
 }
 
-/// Help overlay keys (live `/` filter). Returns true when consumed.
-pub(super) fn handle_help_key(key: KeyEvent, help_filter: &mut Option<String>) -> bool {
-    let Some(filter) = help_filter else {
+/// Help overlay keys (fzf-style live filter & scroll). Returns true when consumed.
+pub(super) fn handle_help_key(key: KeyEvent, help_state: &mut Option<ui::overlays::help::HelpState>) -> bool {
+    let Some(st) = help_state.as_mut() else {
         return false;
     };
+    let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
     match key.code {
         KeyCode::Esc => {
-            *help_filter = None;
-            return true;
+            *help_state = None;
+            true
+        }
+        KeyCode::Up | KeyCode::Char('k') | KeyCode::Char('p') if ctrl || key.code == KeyCode::Up => {
+            st.scroll = st.scroll.saturating_sub(1);
+            true
+        }
+        KeyCode::Down | KeyCode::Char('j') | KeyCode::Char('n') if ctrl || key.code == KeyCode::Down => {
+            st.scroll = st.scroll.saturating_add(1);
+            true
+        }
+        KeyCode::PageUp | KeyCode::Char('u') if ctrl || key.code == KeyCode::PageUp => {
+            st.scroll = st.scroll.saturating_sub(10);
+            true
+        }
+        KeyCode::PageDown | KeyCode::Char('d') if ctrl || key.code == KeyCode::PageDown => {
+            st.scroll = st.scroll.saturating_add(10);
+            true
+        }
+        KeyCode::Left => {
+            st.input.move_left();
+            true
+        }
+        KeyCode::Right => {
+            st.input.move_right();
+            true
+        }
+        KeyCode::Home => {
+            while st.input.cursor() > 0 {
+                st.input.move_left();
+            }
+            true
+        }
+        KeyCode::End => {
+            while st.input.cursor() < st.input.value().len() {
+                st.input.move_right();
+            }
+            true
         }
         KeyCode::Backspace => {
-            filter.pop();
-            return true;
+            st.input.backspace();
+            st.scroll = 0;
+            true
         }
-        KeyCode::Char(c) if key.modifiers.is_empty() => {
-            filter.push(c);
-            return true;
+        KeyCode::Char('w') if ctrl => {
+            let val = st.input.value().to_string();
+            let trimmed = val.trim_end();
+            if let Some(idx) = trimmed.rfind(' ') {
+                st.input.set(&val[..=idx]);
+            } else {
+                st.input.set("");
+            }
+            st.scroll = 0;
+            true
         }
-        _ => {}
+        KeyCode::Char(c) if !ctrl && !key.modifiers.contains(KeyModifiers::ALT) => {
+            st.input.insert(c);
+            st.scroll = 0;
+            true
+        }
+        _ => true,
     }
-    false
 }

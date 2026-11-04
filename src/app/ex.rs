@@ -14,7 +14,7 @@ pub(super) async fn run_ex_line(
     messages: &mut Vec<String>,
     dry_run: bool,
     demo: bool,
-    help_filter: &mut Option<String>,
+    help_state: &mut Option<crate::ui::overlays::help::HelpState>,
     config: &mut Config,
     theme: &mut Theme,
     confirm: &mut Option<crate::command::plan::PendingConfirm>,
@@ -24,7 +24,7 @@ pub(super) async fn run_ex_line(
     match crate::input::ex::parse(line) {
         Ok(crate::input::ex::ExCommand::Quit | crate::input::ex::ExCommand::QuitAll) => return true,
         Ok(crate::input::ex::ExCommand::Help(topic)) => {
-            *help_filter = Some(topic);
+            *help_state = Some(crate::ui::overlays::help::HelpState::new(&topic));
         }
         Ok(crate::input::ex::ExCommand::Set(key, value)) => {
             dash.message = apply_setting(uri, config, theme, &key, &value);

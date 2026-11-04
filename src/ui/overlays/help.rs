@@ -280,18 +280,32 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
     ]
 }
 
-/// Help overlay state (live `/` filter).
+/// Help overlay state (fzf-style filter with single-line text input and scrolling).
 #[derive(Debug, Clone, Default)]
 pub struct HelpState {
-    pub filter: String,
+    pub input: crate::input::textinput::TextInput,
+    pub scroll: usize,
 }
 
-/// Render the help modal (156×37, 4 columns).
-pub fn render(frame: &mut Frame, theme: &Theme, filter: &str, map: &Keymap) {
+impl HelpState {
+    pub fn new(filter: &str) -> Self {
+        Self {
+            input: crate::input::textinput::TextInput::with(filter),
+            scroll: 0,
+        }
+    }
+
+    pub fn query(&self) -> &str {
+        self.input.value()
+    }
+}
+
+/// Render the help modal (single-column categorized list with fzf-style text input at bottom).
+pub fn render(frame: &mut Frame, theme: &Theme, state: &HelpState, map: &Keymap) {
     let t = &theme.tokens;
     let area = frame.area();
-    let w = 156u16.min(area.width.saturating_sub(4));
-    let h = 37u16.min(area.height.saturating_sub(4));
+    let w = 82u16.min(area.width.saturating_sub(4));
+    let h = 34u16.min(area.height.saturating_sub(4));
     let modal = Rect::new(
         area.x + (area.width - w) / 2,
         area.y + (area.height - h) / 2,
@@ -305,29 +319,61 @@ pub fn render(frame: &mut Frame, theme: &Theme, filter: &str, map: &Keymap) {
         .border_style(Style::default().fg(t.blue).bg(t.bg))
         .style(theme.base())
         .title(Span::styled(" ? Keybindings ", theme.panel_title(true)))
-        .title_top(Line::from(Span::styled(" / search · ⎋ close ", theme.dim())).right_aligned());
+        .title_top(Line::from(Span::styled(" ⎋ close ", theme.dim())).right_aligned());
     frame.render_widget(block, modal);
-    let inner = Rect::new(modal.x + 2, modal.y + 1, modal.width - 4, modal.height - 2);
-    let cols = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(25),
-            Constraint::Percentage(25),
-            Constraint::Percentage(25),
-            Constraint::Percentage(25),
-        ])
-        .spacing(1)
-        .split(Rect::new(
-            inner.x,
-            inner.y,
-            inner.width,
-            inner.height.saturating_sub(2),
-        ));
+
+    let inner = Rect::new(
+        modal.x + 1,
+        modal.y + 1,
+        modal.width.saturating_sub(2),
+        modal.height.saturating_sub(2),
+    );
+    if inner.width < 4 || inner.height < 3 {
+        return;
+    }
+
+    let rows = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(1), Constraint::Length(1), Constraint::Length(1)])
+        .split(inner);
+
+    let query = state.query().trim();
     let sections = sections(map);
-    let groups: [&[Section]; 4] = [&sections[0..2], &sections[2..4], &sections[4..6], &sections[6..8]];
-    for (col, group) in cols.iter().zip(groups) {
-        let mut lines: Vec<Line> = Vec::new();
-        for sec in group {
+    let mut matcher = nucleo_matcher::Matcher::new(nucleo_matcher::Config::DEFAULT);
+
+    let mut total_rows = 0;
+    let mut matching_rows = 0;
+    let mut lines: Vec<Line> = Vec::new();
+
+    let mut first_sec = true;
+    for sec in &sections {
+        let mut matched_in_sec: Vec<&(String, String, bool)> = Vec::new();
+        for row in &sec.rows {
+            total_rows += 1;
+            let (k, d, _) = row;
+            let haystack = format!("{} {} {}", sec.title, k, d);
+            let matches = if query.is_empty() || haystack.to_lowercase().contains(&query.to_lowercase()) {
+                true
+            } else {
+                let mut haystack_buf = Vec::new();
+                let mut needle_buf = Vec::new();
+                let h_utf = nucleo_matcher::Utf32Str::new(&haystack, &mut haystack_buf);
+                let n_utf = nucleo_matcher::Utf32Str::new(query, &mut needle_buf);
+                matcher.fuzzy_match(h_utf, n_utf).is_some()
+            };
+
+            if matches {
+                matching_rows += 1;
+                matched_in_sec.push(row);
+            }
+        }
+
+        if !matched_in_sec.is_empty() {
+            if !first_sec {
+                lines.push(Line::from(""));
+            }
+            first_sec = false;
+
             let color = match sec.color {
                 "blue" => t.blue,
                 "green" => t.green,
@@ -338,16 +384,18 @@ pub fn render(frame: &mut Frame, theme: &Theme, filter: &str, map: &Keymap) {
                 "yellow" => t.yellow,
                 _ => t.fg,
             };
+
             lines.push(Line::from(vec![Span::styled(
-                sec.title.clone(),
+                format!("  {}", sec.title),
                 Style::default().fg(color).bg(t.bg).add_modifier(Modifier::BOLD),
             )]));
-            for (k, d, destructive) in &sec.rows {
-                if !filter.is_empty() && !format!("{k} {d}").to_lowercase().contains(&filter.to_lowercase()) {
-                    continue;
-                }
+
+            for (k, d, destructive) in matched_in_sec {
+                let k_len = unicode_width::UnicodeWidthStr::width(k.as_str());
+                let pad = " ".repeat(16usize.saturating_sub(k_len));
                 lines.push(Line::from(vec![
-                    Span::styled(format!("{k:<12}"), theme.key()),
+                    Span::raw("    "),
+                    Span::styled(format!("{k}{pad}"), theme.key()),
                     Span::styled(
                         d.clone(),
                         if *destructive {
@@ -358,14 +406,55 @@ pub fn render(frame: &mut Frame, theme: &Theme, filter: &str, map: &Keymap) {
                     ),
                 ]));
             }
-            lines.push(Line::from(""));
         }
-        frame.render_widget(Paragraph::new(lines).style(theme.base()), *col);
     }
-    let footer = Line::from(vec![Span::styled(
-        "● asks for confirmation",
-        Style::default().fg(t.red).bg(t.bg),
-    )]);
-    let footer_area = Rect::new(inner.x, inner.y + inner.height - 1, inner.width, 1);
-    frame.render_widget(Paragraph::new(footer).style(theme.base()), footer_area);
+
+    if lines.is_empty() {
+        lines.push(Line::from(""));
+        lines.push(Line::from(Span::styled(
+            "    no matching keybindings",
+            theme.dim(),
+        )));
+    }
+
+    // Scrollable list area
+    let list_h = rows[0].height as usize;
+    let max_scroll = lines.len().saturating_sub(list_h);
+    let scroll = state.scroll.min(max_scroll);
+    let visible_lines: Vec<Line> = lines.into_iter().skip(scroll).take(list_h).collect();
+    frame.render_widget(Paragraph::new(visible_lines).style(theme.base()), rows[0]);
+
+    // Separator with legend
+    let legend = "── ● asks for confirmation ";
+    let sep_len = (inner.width as usize).saturating_sub(legend.chars().count());
+    let sep_line = Line::from(vec![
+        Span::styled("── ", Style::default().fg(t.hl)),
+        Span::styled("● asks for confirmation ", Style::default().fg(t.red)),
+        Span::styled("─".repeat(sep_len), Style::default().fg(t.hl)),
+    ]);
+    frame.render_widget(Paragraph::new(sep_line), rows[1]);
+
+    // Bottom single-line text input
+    let text = state.input.value();
+    let cur = state.input.cursor().min(text.len());
+    let (before, rest) = text.split_at(cur);
+    let mut rest_chars = rest.chars();
+    let at_cursor = rest_chars.next().map_or(String::from(" "), String::from);
+    let after: String = rest_chars.collect();
+
+    let left = vec![
+        Span::styled(
+            "  ❯ ",
+            Style::default().fg(t.magenta).add_modifier(Modifier::BOLD),
+        ),
+        Span::styled(
+            before.to_string(),
+            Style::default().fg(t.fg).add_modifier(Modifier::BOLD),
+        ),
+        Span::styled(at_cursor, Style::default().fg(t.bg).bg(t.fg)),
+        Span::styled(after, Style::default().fg(t.fg).add_modifier(Modifier::BOLD)),
+    ];
+    let count = format!("{} / {}  ", matching_rows, total_rows);
+    let right = vec![Span::styled(count, Style::default().fg(t.comment).bg(t.bg2))];
+    crate::ui::chrome::render_split(frame, rows[2], left, right, Style::default().bg(t.bg2));
 }
