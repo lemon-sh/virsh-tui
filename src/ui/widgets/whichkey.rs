@@ -86,11 +86,6 @@ pub fn entries_for_map(map: &HashMap<Vec<String>, KeyAction>, prefix: &str) -> V
     result
 }
 
-/// Return key and description pairs for a given pending prefix using the default keymap.
-pub fn entries_for(prefix: &str) -> Vec<(String, String)> {
-    entries_for_map(&crate::input::keymap::default_map(), prefix)
-}
-
 /// Render the which-key popup bottom-right for a pending prefix and live keymap.
 pub fn render(f: &mut Frame, theme: &Theme, prefix: &str, map: &HashMap<Vec<String>, KeyAction>) {
     let area = f.area();
@@ -109,15 +104,7 @@ pub fn render(f: &mut Frame, theme: &Theme, prefix: &str, map: &HashMap<Vec<Stri
         })
         .collect();
 
-    let title = match prefix {
-        "Space" => " Leader  ␣ ".to_string(),
-        "Space s" => " Leader  ␣ s ".to_string(),
-        "Space m" => " Leader  ␣ m ".to_string(),
-        "Space d" => " Leader  ␣ d ".to_string(),
-        "Space i" => " Leader  ␣ i ".to_string(),
-        p if p.starts_with("Space ") => format!(" Leader  ␣ {} ", &p[6..]),
-        _ => format!(" {prefix} "),
-    };
+    let title = format!(" {prefix} ");
 
     let max_len = rows
         .iter()

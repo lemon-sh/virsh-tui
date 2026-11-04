@@ -4,16 +4,14 @@
 //! is shown is what runs.
 
 use super::super::plan::CommandPlan;
-use crate::ui::overlays::wizard::{MediaKind, WizardState, detect_os};
+use crate::ui::overlays::wizard::{MediaKind, WizardState};
 
-/// `--osinfo` value: explicit, detected from the ISO name, or virt-install detection.
+/// `--osinfo` value: explicit or virt-install detection.
 pub fn osinfo(st: &WizardState) -> String {
     if !st.os_id.trim().is_empty() {
-        return st.os_id.trim().to_string();
-    }
-    match (st.media, detect_os(&st.iso_path)) {
-        (MediaKind::Iso, Some(os)) => os,
-        _ => String::from("detect=on,require=off"),
+        st.os_id.trim().to_string()
+    } else {
+        String::from("detect=on,require=off")
     }
 }
 

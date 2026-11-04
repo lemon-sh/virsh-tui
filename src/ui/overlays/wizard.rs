@@ -30,25 +30,6 @@ pub fn valid_name(name: &str, existing: &[&str]) -> bool {
         && !existing.contains(&name)
 }
 
-/// Auto-detect OS variant from an ISO filename.
-pub fn detect_os(iso: &str) -> Option<String> {
-    let lower = iso.rsplit('/').next().unwrap_or(iso).to_lowercase();
-    if lower.contains("fedora") {
-        let digits: String = lower.chars().filter(|c| c.is_ascii_digit()).take(2).collect();
-        return Some(format!("fedora{digits}"));
-    }
-    if lower.contains("arch") {
-        return Some(String::from("archlinux"));
-    }
-    if lower.contains("ubuntu") {
-        return Some(String::from("ubuntu24.04"));
-    }
-    if lower.contains("debian") {
-        return Some(String::from("debian13"));
-    }
-    None
-}
-
 /// Install media kind.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 pub enum MediaKind {
@@ -455,14 +436,9 @@ impl WizardState {
         use WField as F;
         match f {
             F::Name => String::from("letters, digits, . _ - · must be unique"),
-            F::Os => match detect_os(&self.iso_path) {
-                Some(os) if self.os_id.is_empty() => {
-                    format!("empty: virt-install detects it (ISO looks like {os})")
-                }
-                _ => String::from(
-                    "e.g. fedora42, ubuntu24.04, archlinux, win11 · empty: detect from the media",
-                ),
-            },
+            F::Os => {
+                String::from("e.g. fedora42, ubuntu24.04, archlinux, win11 · empty: detect from the media")
+            }
             F::Iso => {
                 if self.host.isos.is_empty() {
                     String::from("absolute path to the ISO")
@@ -964,7 +940,6 @@ fn render_step_form(frame: &mut Frame, theme: &Theme, st: &WizardState, area: Re
     ];
     let fields = st.fields();
     let focus = st.focus.min(fields.len() - 1);
-    let slider_w = 30usize;
     for (i, &f) in fields.iter().enumerate() {
         let cur = i == focus;
         let row_bg = if cur { t.sel } else { t.bg };
@@ -990,26 +965,6 @@ fn render_step_form(frame: &mut Frame, theme: &Theme, st: &WizardState, area: Re
                 spans.push(Span::styled(" ", Style::default().bg(t.hl)));
             }
             WKind::Number { max, .. } => {
-                if matches!(f, WField::Vcpus | WField::Mem) {
-                    let cap = if f == WField::Vcpus {
-                        st.host.threads.max(1)
-                    } else {
-                        (st.host.free_gib.ceil() as u32).max(st.mem_gib).max(1)
-                    };
-                    let n: u32 = value.parse().unwrap_or(0);
-                    let filled = (n.min(cap) as usize * slider_w / cap.max(1) as usize).min(slider_w);
-                    let col = if f == WField::Vcpus { t.blue } else { t.magenta };
-                    spans.push(Span::styled("━".repeat(filled), Style::default().fg(col)));
-                    spans.push(Span::styled(
-                        "●",
-                        Style::default().fg(col).add_modifier(Modifier::BOLD),
-                    ));
-                    spans.push(Span::styled(
-                        "─".repeat(slider_w - filled),
-                        Style::default().fg(t.gutter),
-                    ));
-                    spans.push(Span::raw(" "));
-                }
                 spans.push(Span::styled(
                     format!(" {value:>3} "),
                     Style::default().fg(t.fg).bg(t.hl),

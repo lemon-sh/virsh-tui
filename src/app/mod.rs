@@ -1,9 +1,13 @@
 //! App: main loop, tick, and input.
 
-pub mod backoff;
 pub mod external;
 pub mod mode;
 pub mod poller;
+
+/// Delay in seconds before retry N (1, 2, 4, … capped at 30).
+pub fn delay_secs(failures: u32) -> u64 {
+    (1u64 << failures.min(5)).min(30)
+}
 
 mod detail;
 mod domains;
@@ -194,7 +198,6 @@ pub async fn run(cli: &Cli, config: &Config) -> Result<()> {
         "host" => View::Host,
         "networks" => View::Networks,
         "storage" => View::Storage,
-        "gallery" => View::Gallery,
         _ => View::Dashboard,
     };
 
@@ -585,7 +588,6 @@ impl App {
             f.area(),
         );
         match self.view {
-            View::Gallery => ui::views::gallery::render(f, &self.theme),
             View::Host => ui::views::host::render(f, &self.theme, &self.host),
             View::Networks => ui::views::networks::render(f, &self.theme, &self.nets),
             View::Events => ui::views::events::render(f, &self.theme, &self.events_state),
@@ -599,39 +601,37 @@ impl App {
                 }
             }
         }
-        if !matches!(self.view, View::Gallery) {
-            if self.confirm.is_some()
-                || self.wizard.is_some()
-                || self.palette.is_some()
-                || self.help_state.is_some()
-            {
-                crate::ui::widgets::modal::dim_background(f, &self.theme);
+        if self.confirm.is_some()
+            || self.wizard.is_some()
+            || self.palette.is_some()
+            || self.help_state.is_some()
+        {
+            crate::ui::widgets::modal::dim_background(f, &self.theme);
+        }
+        if let Some((c, _, _)) = &self.confirm {
+            crate::ui::overlays::confirm::render(f, &self.theme, f.area(), c);
+        }
+        if let Some(ex) = &self.ex_line {
+            render_ex_line(f, &self.theme, ex);
+            if let Some(c) = &self.completion {
+                render_completion(f, &self.theme, c);
             }
-            if let Some((c, _, _)) = &self.confirm {
-                crate::ui::overlays::confirm::render(f, &self.theme, f.area(), c);
-            }
-            if let Some(ex) = &self.ex_line {
-                render_ex_line(f, &self.theme, ex);
-                if let Some(c) = &self.completion {
-                    render_completion(f, &self.theme, c);
-                }
-            }
-            if let Some(prefix) = self.engine.pending_prefix() {
-                render_which_key(f, &self.theme, &prefix, self.engine.map());
-            }
-            if let Some(wz) = &self.wizard {
-                crate::ui::overlays::wizard::render(f, &self.theme, wz);
-                render_wizard_status(f, &self.theme, wz);
-            }
-            if let Some(pal) = &self.palette {
-                crate::ui::overlays::palette::render(f, &self.theme, pal);
-            }
-            if let Some(st) = &self.settings {
-                crate::ui::views::settings::render(f, &self.theme, &self.config, st);
-            }
-            if let Some(help) = &self.help_state {
-                crate::ui::overlays::help::render(f, &self.theme, help, self.engine.map());
-            }
+        }
+        if let Some(prefix) = self.engine.pending_prefix() {
+            render_which_key(f, &self.theme, &prefix, self.engine.map());
+        }
+        if let Some(wz) = &self.wizard {
+            crate::ui::overlays::wizard::render(f, &self.theme, wz);
+            render_wizard_status(f, &self.theme, wz);
+        }
+        if let Some(pal) = &self.palette {
+            crate::ui::overlays::palette::render(f, &self.theme, pal);
+        }
+        if let Some(st) = &self.settings {
+            crate::ui::views::settings::render(f, &self.theme, &self.config, st);
+        }
+        if let Some(help) = &self.help_state {
+            crate::ui::overlays::help::render(f, &self.theme, help, self.engine.map());
         }
         crate::ui::widgets::modal::apply_transparency(f, &self.theme);
     }
@@ -1199,7 +1199,7 @@ impl App {
                     continue;
                 }
             }
-            if matches!(self.view, View::Host | View::Events | View::Gallery)
+            if matches!(self.view, View::Host | View::Events)
                 && !matches!(
                     resolved.action,
                     A::Ex | A::Palette | A::Help | A::Settings | A::NewDomain | A::InsertMedia
@@ -1466,7 +1466,6 @@ enum View {
     Networks,
     Storage,
     Events,
-    Gallery,
     Detail,
 }
 

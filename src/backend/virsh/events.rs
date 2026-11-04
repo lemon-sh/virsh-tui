@@ -122,7 +122,7 @@ pub fn subscribe(uri: &str) -> mpsc::Receiver<crate::model::LibvirtEvent> {
                 }
                 // Always back off before respawning: a stream that ends immediately
                 // (daemon down, bad URI) must not turn into a busy loop.
-                let secs = crate::app::backoff::delay_secs(failures.max(1));
+                let secs = crate::app::delay_secs(failures.max(1));
                 tokio::time::sleep(std::time::Duration::from_secs(secs)).await;
             }
         });

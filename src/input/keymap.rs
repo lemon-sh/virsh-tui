@@ -103,13 +103,7 @@ pub fn prefix_group_description(prefix: &[String]) -> &'static str {
             return desc;
         }
     }
-    match prefix.last().map(|s| s.as_str()) {
-        Some("s") => "snapshot",
-        Some("m") => "media",
-        Some("d") => "disk",
-        Some("i") => "NIC",
-        _ => "…",
-    }
+    "…"
 }
 
 /// Format key sequence tokens into display string (`["Space", "n"]` -> `"␣n"`).

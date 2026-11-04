@@ -19,19 +19,8 @@ pub struct Section {
     pub rows: Vec<(String, String, bool)>,
 }
 
-fn leader_title(map: &Keymap) -> String {
-    // Dynamic leader title e.g. "Leader  ␣" based on actual leader token bound to NewDomain
-    if let Some((seq, _)) = map.iter().find(|(_, a)| **a == A::NewDomain)
-        && seq.len() >= 2
-    {
-        let leader_sym = match seq[0].as_str() {
-            "Space" => "␣",
-            "Enter" => "⏎",
-            other => other,
-        };
-        return format!("Leader  {leader_sym}");
-    }
-    String::from("Leader  ␣")
+fn leader_title(_map: &Keymap) -> String {
+    String::from("Leader")
 }
 
 /// Keys bound to `actions` in the live map, `a / b` joined; `None` if the
@@ -40,34 +29,6 @@ fn live_label(map: &Keymap, actions: &[A]) -> Option<String> {
     if actions.is_empty() {
         return None;
     }
-    // Check if the actions represent the 5 view switching actions
-    if actions.len() == 5
-        && actions
-            == [
-                A::ViewDomains,
-                A::ViewHost,
-                A::ViewNetworks,
-                A::ViewStorage,
-                A::ViewEvents,
-            ]
-    {
-        let seqs: Vec<Option<String>> = actions
-            .iter()
-            .map(|a| crate::input::keymap::action_key_label(map, *a))
-            .collect();
-        if seqs
-            == [
-                Some("1".into()),
-                Some("2".into()),
-                Some("3".into()),
-                Some("4".into()),
-                Some("5".into()),
-            ]
-        {
-            return Some("1 … 5".to_string());
-        }
-    }
-
     let parts: Vec<String> = actions
         .iter()
         .map(|a| {
@@ -80,24 +41,6 @@ fn live_label(map: &Keymap, actions: &[A]) -> Option<String> {
         })
         .collect();
 
-    // `␣sc / ␣sr / ␣sd` → `␣s c/r/d` when only the last key differs.
-    if parts.len() > 2 {
-        let prefix: String = parts[0]
-            .chars()
-            .take(parts[0].chars().count().saturating_sub(1))
-            .collect();
-        if !prefix.is_empty()
-            && parts
-                .iter()
-                .all(|p| p.starts_with(&prefix) && p.chars().count() == prefix.chars().count() + 1)
-        {
-            let lasts: Vec<String> = parts
-                .iter()
-                .map(|p| p.chars().last().unwrap_or(' ').to_string())
-                .collect();
-            return Some(format!("{prefix} {}", lasts.join("/")));
-        }
-    }
     Some(parts.join(" / "))
 }
 
@@ -178,16 +121,7 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
                 act(&[A::HalfDown, A::HalfUp], "half page"),
                 act(&[A::CycleFocus], "cycle focus"),
                 act(&[A::PrevTab, A::NextTab], "prev / next tab"),
-                act(
-                    &[
-                        A::ViewDomains,
-                        A::ViewHost,
-                        A::ViewNetworks,
-                        A::ViewStorage,
-                        A::ViewEvents,
-                    ],
-                    "switch view",
-                ),
+                info("1 … 5", "switch view"),
                 act(&[A::Open], "open"),
                 act(&[A::Back], "back"),
                 act(&[A::Filter], "filter"),

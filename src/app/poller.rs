@@ -236,7 +236,7 @@ pub fn spawn(uri: &str, interval_secs: u64, balloon_period: Option<u64>) -> Poll
                     failures += 1;
                     cached_autostart = None;
                     cached_remote_host = None;
-                    next_try = Instant::now() + Duration::from_secs(super::backoff::delay_secs(failures));
+                    next_try = Instant::now() + Duration::from_secs(super::delay_secs(failures));
                     LiveMsg::Failed(e.to_string().lines().next().unwrap_or("").to_string())
                 }
             };

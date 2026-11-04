@@ -4,15 +4,6 @@ use crate::theme::Theme;
 use ratatui::Frame;
 use ratatui::style::Modifier;
 
-/// Centered rect of at most `w`×`h` inside `area`.
-pub fn centered(area: ratatui::layout::Rect, w: u16, h: u16) -> ratatui::layout::Rect {
-    let w = w.min(area.width.saturating_sub(4));
-    let h = h.min(area.height.saturating_sub(4));
-    let x = area.x + (area.width - w) / 2;
-    let y = area.y + (area.height - h) / 2;
-    ratatui::layout::Rect::new(x, y, w, h)
-}
-
 /// "Dim behind modals": recolour everything drawn so far to `gutter` on a flat
 /// background. Call right before drawing a modal. No-op when disabled.
 pub fn dim_background(frame: &mut Frame, theme: &Theme) {

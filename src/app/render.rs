@@ -113,7 +113,6 @@ pub(super) fn dump_frame(
     terminal.draw(|f| {
         f.render_widget(ratatui::widgets::Block::default().style(theme.base()), f.area());
         match screen {
-            "gallery" => ui::views::gallery::render(f, theme),
             "chrome" => ui::render(f, theme, state),
             "host" => ui::views::host::render(f, theme, host),
             "networks" => ui::views::networks::render(f, theme, nets),

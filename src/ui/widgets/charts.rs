@@ -205,26 +205,3 @@ pub fn lg(v: f64, w: usize) -> (String, String) {
     let n = n.min(w);
     ("━".repeat(n), "━".repeat(w - n))
 }
-
-/// Level colour token name.
-pub fn lvl(v: f64) -> &'static str {
-    if v < 0.5 {
-        "green"
-    } else if v < 0.8 {
-        "yellow"
-    } else {
-        "red"
-    }
-}
-
-/// Gradient: assign each row a colour from top to bottom.
-pub fn grad(rows: Vec<String>, colors: &[&str]) -> Vec<(String, String)> {
-    let n = rows.len().max(1);
-    rows.into_iter()
-        .enumerate()
-        .map(|(i, t)| {
-            let idx = (i * colors.len() / n).min(colors.len() - 1);
-            (t, colors[idx].to_string())
-        })
-        .collect()
-}

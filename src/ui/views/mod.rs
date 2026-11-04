@@ -2,7 +2,6 @@
 pub mod dashboard;
 pub mod detail;
 pub mod events;
-pub mod gallery;
 pub mod host;
 pub mod networks;
 pub mod settings;
