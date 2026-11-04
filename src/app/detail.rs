@@ -534,18 +534,22 @@ pub(super) async fn dispatch_detail(
         }
     }
     if d.tab == DetailTab::Xml {
-        // Scroll the XML (top visible line; clamped when rendering).
-        let last = d.xml.lines().count().saturating_sub(1);
+        // Scroll the XML (top visible line; bounded by the visible window).
+        let lines_count = d.xml.lines().count();
+        let visible = d.xml_viewport_height.get().max(1);
+        let max_top = lines_count.saturating_sub(visible);
+        let step = (visible / 2).max(1);
         let top = &mut d.xml_cursor;
         match action {
-            A::MoveDown => *top = (*top + 1).min(last),
+            A::MoveDown => *top = (*top + 1).min(max_top),
             A::MoveUp => *top = top.saturating_sub(1),
-            A::HalfDown => *top = (*top + 15).min(last),
-            A::HalfUp => *top = top.saturating_sub(15),
+            A::HalfDown => *top = (*top + step).min(max_top),
+            A::HalfUp => *top = top.saturating_sub(step),
             A::GoTop => *top = 0,
-            A::GoBottom => *top = last,
+            A::GoBottom => *top = max_top,
             _ => {}
         }
+        *top = (*top).min(max_top);
     }
     match action {
         A::NextTab => d.next_tab(),

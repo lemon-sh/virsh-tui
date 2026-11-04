@@ -118,6 +118,7 @@ pub struct DetailState {
     pub xml: String,
     pub fold: XmlFold,
     pub xml_cursor: usize,
+    pub xml_viewport_height: std::cell::Cell<usize>,
     pub message: String,
     pub uri: String,
     pub connected: bool,
@@ -155,6 +156,7 @@ impl DetailState {
             xml,
             fold: XmlFold::new(lines),
             xml_cursor: 0,
+            xml_viewport_height: std::cell::Cell::new(25),
             message: String::new(),
             uri: String::from("qemu:///system"),
             connected: true,
@@ -711,6 +713,7 @@ fn render_xml(frame: &mut Frame, theme: &Theme, state: &DetailState, area: Rect)
     }
     // Keep the last page full: never scroll past the end.
     let visible = area.height.saturating_sub(2) as usize;
+    state.xml_viewport_height.set(visible);
     let top = state.xml_cursor.min(lines.len().saturating_sub(visible));
     let right = format!(
         "{}–{} of {} · j/k scroll · e edit",
