@@ -134,7 +134,7 @@ pub fn sections(map: &Keymap) -> Vec<Section> {
                 ("j / k", "down / up", false, &[A::MoveDown, A::MoveUp]),
                 ("gg / G", "top / bottom", false, &[A::GoTop, A::GoBottom]),
                 ("C-d / C-u", "half page", false, &[A::HalfDown, A::HalfUp]),
-                ("h / l", "focus pane ← →", false, &[]),
+                ("Tab", "cycle focus", false, &[A::CycleFocus]),
                 ("H / L", "prev / next tab", false, &[A::PrevTab, A::NextTab]),
                 (
                     "1 … 5",

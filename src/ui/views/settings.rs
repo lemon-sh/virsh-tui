@@ -653,7 +653,7 @@ fn render_statusbar(frame: &mut Frame, theme: &Theme, state: &SettingsState, are
             Style::default().fg(t.fg2).bg(t.hl),
         ),
         Span::styled(
-            "  j/k preview theme  ⏎ apply  h/l pane  ⎋ revert & close",
+            "  j/k preview theme  ⏎ apply  Tab pane  ⎋ revert & close",
             theme.dim(),
         ),
     ];

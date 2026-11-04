@@ -43,5 +43,5 @@ expression: "buffer_text(174, 43, &state)"
  │                                                                      │ │                                                                                                 │ 
  │                                                                      │ │                                                                                                 │ 
  ╰──────────────────────────────────────────────────────────────────────╯ ╰───────────────────────────────────────────────────────────────────── net-update · live + config ╯ 
- NORMAL  networks › default   j/k move  l leases  s start  D destroy  a autostart  e edit xml  n new  X undefine                                                              
+ NORMAL  networks › default   j/k move  Tab focus  s start  D destroy  a autostart  e edit xml  n new  X undefine                                                             
 ── virsh net-dhcp-leases default

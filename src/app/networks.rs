@@ -29,7 +29,7 @@ pub(super) async fn dispatch_networks(
                 load_net_selection(uri, nets).await;
             }
         }
-        A::LeaseFocus => {
+        A::CycleFocus => {
             nets.focus = if nets.focus == NetFocus::Leases {
                 NetFocus::Networks
             } else {

@@ -73,10 +73,6 @@ pub(super) async fn handle_storage_key(
     let tok = KeySeq::from_event(&key);
     match tok.token() {
         "j" | "k" => false,
-        "h" | "l" => {
-            store.focus_pools = !store.focus_pools;
-            true
-        }
         "n" => {
             *ex_line = Some(crate::input::textinput::TextInput::with("vol-create-as "));
             true
@@ -313,6 +309,9 @@ pub(super) async fn dispatch_storage(
             } else {
                 store.vol_selected = store.vol_selected.saturating_sub(1);
             }
+        }
+        A::CycleFocus => {
+            store.focus_pools = !store.focus_pools;
         }
         A::Open => {
             if let Some(v) = store.selected_vol()

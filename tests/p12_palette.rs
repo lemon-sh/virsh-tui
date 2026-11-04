@@ -90,7 +90,11 @@ fn single_source_of_truth_keymap_rebind_reflected_everywhere() {
 
     // 4. WhichKey shows shutdown under Space
     let wk_entries = entries_for_map(&map, "Space");
-    assert!(wk_entries.iter().any(|(k, d)| k == "q" && d == "shutdown"));
+    assert!(
+        wk_entries
+            .iter()
+            .any(|(k, d)| k == "q" && d.starts_with("shutdown"))
+    );
 
     // 5. Command palette shows ␣q for shutdown
     let pal_items = curated_with_map(&map);

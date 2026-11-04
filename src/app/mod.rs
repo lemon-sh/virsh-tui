@@ -1210,41 +1210,6 @@ impl App {
             {
                 continue;
             }
-            if self.view == View::Networks {
-                if dispatch_networks(
-                    resolved.action,
-                    &mut self.nets,
-                    &mut self.detail,
-                    &mut self.view,
-                    &self.uri,
-                    self.dry_run,
-                    self.demo,
-                    &mut self.history,
-                    &mut self.messages,
-                    &mut self.confirm,
-                )
-                .await
-                {
-                    return true;
-                }
-                // ⏎ on a lease: open the owning domain's detail view.
-                if let Some(dom) = self.nets.pending_open.take() {
-                    self.dash.select_name(&dom);
-                    if self.dash.selected().name == dom {
-                        self.view = View::Dashboard;
-                        open_detail(
-                            &mut self.detail,
-                            &mut self.view,
-                            &self.dash,
-                            &self.host,
-                            &self.uri,
-                            self.demo,
-                        )
-                        .await;
-                    }
-                }
-                continue;
-            }
             match (self.view, resolved.action) {
                 (_, A::InsertMedia) => {
                     open_picker(&mut self.store, &self.detail, &self.dash, &self.uri, self.demo).await;
@@ -1303,6 +1268,10 @@ impl App {
                     self.dash.detail_tab = (self.dash.detail_tab + 1) % 5;
                     continue;
                 }
+                (_, A::Ex) => {
+                    self.ex_line = Some(crate::input::textinput::TextInput::new());
+                    continue;
+                }
                 (_, A::Palette) => {
                     let ctx = self
                         .detail
@@ -1330,6 +1299,41 @@ impl App {
                         &mut self.messages,
                     )
                     .await;
+                    continue;
+                }
+                (View::Networks, _) => {
+                    if dispatch_networks(
+                        resolved.action,
+                        &mut self.nets,
+                        &mut self.detail,
+                        &mut self.view,
+                        &self.uri,
+                        self.dry_run,
+                        self.demo,
+                        &mut self.history,
+                        &mut self.messages,
+                        &mut self.confirm,
+                    )
+                    .await
+                    {
+                        return true;
+                    }
+                    // ⏎ on a lease: open the owning domain's detail view.
+                    if let Some(dom) = self.nets.pending_open.take() {
+                        self.dash.select_name(&dom);
+                        if self.dash.selected().name == dom {
+                            self.view = View::Dashboard;
+                            open_detail(
+                                &mut self.detail,
+                                &mut self.view,
+                                &self.dash,
+                                &self.host,
+                                &self.uri,
+                                self.demo,
+                            )
+                            .await;
+                        }
+                    }
                     continue;
                 }
                 (View::Storage, _) => {

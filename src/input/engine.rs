@@ -58,7 +58,7 @@ pub enum KeyAction {
     ChipCycle,
     ChipCycleBack,
     WindowCycle,
-    LeaseFocus,
+    CycleFocus,
     LeasePin,
     LeaseUnpin,
     Ex,
@@ -136,7 +136,7 @@ impl KeyAction {
         (Self::ChipCycle, "chip_cycle"),
         (Self::ChipCycleBack, "chip_cycle_back"),
         (Self::WindowCycle, "window_cycle"),
-        (Self::LeaseFocus, "lease_focus"),
+        (Self::CycleFocus, "cycle_focus"),
         (Self::LeasePin, "lease_pin"),
         (Self::LeaseUnpin, "lease_unpin"),
         (Self::Ex, "ex"),
@@ -181,6 +181,9 @@ impl KeyAction {
 
     /// Parse a keymap.toml action name.
     pub fn from_name(name: &str) -> Option<Self> {
+        if name == "lease_focus" {
+            return Some(Self::CycleFocus);
+        }
         Self::NAMES.iter().find(|(_, n)| *n == name).map(|(a, _)| *a)
     }
 
@@ -248,7 +251,7 @@ impl KeyAction {
             Self::ChipCycle => "cycle filter chips",
             Self::ChipCycleBack => "cycle filter chips back",
             Self::WindowCycle => "60s · 5m · 1h",
-            Self::LeaseFocus => "lease focus",
+            Self::CycleFocus => "cycle focus",
             Self::LeasePin => "lease pin",
             Self::LeaseUnpin => "lease unpin",
             Self::Ex => "ex command",
@@ -281,49 +284,6 @@ impl KeyAction {
             Self::ViewStorage => "storage view",
             Self::ViewEvents => "events view",
             Self::Noop => "",
-        }
-    }
-
-    /// Concise label shown in WhichKey popup.
-    pub fn whichkey_label(self) -> &'static str {
-        match self {
-            Self::NewDomain => "new domain",
-            Self::Clone => "clone",
-            Self::Rename => "rename",
-            Self::Migrate => "migrate",
-            Self::SnapshotNew => "snapshot new",
-            Self::SnapshotRevert => "revert",
-            Self::SnapshotDelete => "delete",
-            Self::InsertMedia => "insert ISO",
-            Self::EjectMedia => "eject",
-            Self::DiskAttach => "disk attach",
-            Self::DiskResize => "disk resize",
-            Self::NicAttach => "NIC attach",
-            Self::NicLink => "NIC link",
-            Self::BootOrder => "boot order",
-            Self::ExportXml => "export XML",
-            Self::LeasePin => "lease pin",
-            Self::LeaseUnpin => "lease unpin",
-            Self::GoTop => "top",
-            Self::GoBottom => "bottom",
-            Self::GotoXml => "goto XML",
-            Self::YankName => "name",
-            Self::YankUuid => "uuid",
-            Self::YankIp => "ip",
-            Self::YankCmd => "command",
-            Self::Start => "start",
-            Self::Shutdown => "shutdown",
-            Self::Destroy => "destroy",
-            Self::Reboot => "reboot",
-            Self::Reset => "reset",
-            Self::Pause => "pause",
-            Self::ManagedSave => "suspend",
-            Self::Autostart => "autostart",
-            Self::Console => "console",
-            Self::Viewer => "viewer",
-            Self::EditXml => "edit XML",
-            Self::Undefine => "undefine",
-            _ => self.description(),
         }
     }
 

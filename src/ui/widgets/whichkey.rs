@@ -24,21 +24,6 @@ pub fn entries_for_map(map: &HashMap<Vec<String>, KeyAction>, prefix: &str) -> V
         return Vec::new();
     }
 
-    // Special case for "g": vim tab switches 1-5
-    if prefix == "g" {
-        let mut res = Vec::new();
-        if let Some((_, a)) = map.iter().find(|(k, _)| k.as_slice() == ["g", "g"]) {
-            res.push(("g".to_string(), a.whichkey_label().to_string()));
-        } else {
-            res.push(("g".to_string(), "top".to_string()));
-        }
-        if let Some((_, a)) = map.iter().find(|(k, _)| k.as_slice() == ["g", "x"]) {
-            res.push(("x".to_string(), a.whichkey_label().to_string()));
-        }
-        res.push(("1-5".to_string(), "views".to_string()));
-        return res;
-    }
-
     // Collect all candidate tokens immediately following prefix_tokens
     let mut next_tokens: Vec<String> = Vec::new();
     for seq in map.keys() {
@@ -98,7 +83,7 @@ pub fn entries_for_map(map: &HashMap<Vec<String>, KeyAction>, prefix: &str) -> V
             let group_name = crate::input::keymap::prefix_group_description(&full_sub);
             result.push((format!("{tok} …"), group_name.to_string()));
         } else if let Some((_, action)) = sub_seqs.first() {
-            result.push((tok, action.whichkey_label().to_string()));
+            result.push((tok, action.description().to_string()));
         }
     }
 
@@ -200,6 +185,18 @@ mod tests {
         assert_eq!(entries_for("Space m").len(), 2);
         assert_eq!(entries_for("Space d").len(), 2);
         assert_eq!(entries_for("Space i").len(), 2);
+    }
+
+    #[test]
+    fn g_prefix_entries() {
+        let rows = entries_for("g");
+        assert_eq!(
+            rows,
+            vec![
+                ("g".to_string(), "top".to_string()),
+                ("x".to_string(), "goto XML".to_string()),
+            ]
+        );
     }
 
     #[test]

@@ -36,5 +36,5 @@ expression: "shot(120, 36, |f| settings::render(f, &th, &cfg, &state))"
  │                           │ │                                                │ │                                   │ 
  │                           │ │                                                │ │                                   │ 
  ╰───────────────────────────╯ ╰────────────────────────────────────────────────╯ ╰───────────────────────────────────╯ 
- NORMAL  settings › appearance › theme   j/k preview theme  ⏎ apply  h/l pane  ⎋ revert & close                         
+ NORMAL  settings › appearance › theme   j/k preview theme  ⏎ apply  Tab pane  ⎋ revert & close                         
 saved to ~/.config/virsh-tui/config.toml · theme = "tokyo-night"

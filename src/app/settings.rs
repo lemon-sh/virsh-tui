@@ -27,12 +27,12 @@ pub(super) fn handle_settings_key(
             move_settings(st, -1, config, theme);
             return true;
         }
-        KeyCode::Char('h') if key.modifiers.is_empty() => {
-            cycle_pane(st, -1);
+        KeyCode::Tab => {
+            cycle_pane(st, 1);
             return true;
         }
-        KeyCode::Char('l') if key.modifiers.is_empty() => {
-            cycle_pane(st, 1);
+        KeyCode::BackTab => {
+            cycle_pane(st, -1);
             return true;
         }
         KeyCode::Enter if key.modifiers.is_empty() => {

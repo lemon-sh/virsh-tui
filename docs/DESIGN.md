@@ -185,7 +185,7 @@ History windows: `t` cycles 60 s → 5 min → 1 h (ring buffers per domain per 
 
 ## 6. Keymap (default — all remappable in `keymap.toml`)
 
-**Navigation**: `j/k` · `gg/G` · `C-d/C-u` · `h/l` focus pane · `H/L` prev/next inner tab · `1…5` views · `⏎` open · `⌫`/`q` back · `/` filter · `n/N` next/prev match.
+**Navigation**: `j/k` · `gg/G` · `C-d/C-u` · `Tab` cycle focus · `H/L` prev/next inner tab · `1…5` views · `⏎` open · `⌫`/`q` back · `/` filter · `n/N` next/prev match.
 **Modes**: `i`/`a` edit field (INSERT) · `⎋` NORMAL · `V` visual select · `m` mark · `:` ex · `C-p` palette.
 **Domain**: `s` start · `S` shutdown · `D` destroy● · `r` reboot · `R` reset● · `p` pause/resume · `Z` managed-save · `a` autostart · `c` console · `v` viewer · `e` edit XML · `X` undefine●.
 **Yank**: `yy` name · `yu` uuid · `yi` ip · `yc` last command.

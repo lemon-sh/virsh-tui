@@ -758,7 +758,7 @@ fn render_statusbar(frame: &mut Frame, theme: &Theme, state: &NetworksState, are
             Style::default().fg(t.fg2).bg(t.hl),
         ),
         Span::styled(
-            "  j/k move  l leases  s start  D destroy  a autostart  e edit xml  n new  X undefine",
+            "  j/k move  Tab focus  s start  D destroy  a autostart  e edit xml  n new  X undefine",
             theme.dim(),
         ),
     ];

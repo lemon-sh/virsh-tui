@@ -178,3 +178,8 @@
 - **Dynamic which-key popup:** `ui::widgets::whichkey` was previously hardcoded with static string slices for `"Space"`, `"Space s"`, `"g"`, etc. It now derives its items, sub-prefixes (e.g. `s …`, `m …`), and labels dynamically from the active keymap (`KeyEngine::map()`), respecting user `keymap.toml` overrides and developer binding adjustments while preserving default ordering.
 - **Dynamic help overlay labels:** `ui::overlays::help` previously had disconnected static rows with empty action slices (e.g., `⌫ / q`, `1 … 5`, and static leader titles). All rows are now connected to their corresponding `KeyAction`s and dynamically format bound sequences, multi-key group compacting (`␣s c/r/d`), sequential tab ranges, and dynamic leader prefixes.
 - **Curated command palette synchronization:** Curated palette actions in `ui::overlays::palette::curated_with_map` now resolve their key shortcut strings from the keymap via `input::keymap::action_key_label`, ensuring palette shortcut badges stay in sync.
+
+## Focus movement & tab 3 help (2026-11-04)
+
+- **Focus cycling via `Tab`:** Removed `h` and `l` for focus movement across views and panes. Added `Tab` / `S-Tab` binding mapped to `KeyAction::CycleFocus`. In Networks (tab 3), `l` was removed and `Tab` cycles focus between Networks and DHCP Leases. In Storage (tab 4), `Tab` cycles focus between Pools and Volumes. In Settings, `Tab` / `BackTab` cycles between category and option panes.
+- **Global overlay dispatch in Networks view:** Moved `View::Networks` action handling to the standard match arm after global overlay checks (`Help`, `Palette`, `Settings`, `Ex`), resolving an issue where `?` help was swallowed before reaching the help overlay handler.
